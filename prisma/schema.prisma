@@ -1,0 +1,111 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model User {
+  id               String    @id @default(cuid())
+  name             String?
+  email            String?   @unique
+  emailVerified    DateTime?
+  image            String?
+  stripeCustomerId String?
+  plan             String    @default("free")
+  createdAt        DateTime  @default(now())
+
+  accounts Account[]
+  sessions Session[]
+  agency   Agency?
+}
+
+model Agency {
+  id         String   @id @default(cuid())
+  userId     String   @unique
+  name       String
+  brandColor String   @default("#3B82F6")
+  logoUrl    String?
+  createdAt  DateTime @default(now())
+
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  clients Client[]
+}
+
+model Client {
+  id               String   @id @default(cuid())
+  agencyId         String
+  name             String
+  email            String
+  gaPropertyId     String?
+  metaAdAccountId  String?
+  active           Boolean  @default(true)
+  createdAt        DateTime @default(now())
+
+  agency       Agency        @relation(fields: [agencyId], references: [id], onDelete: Cascade)
+  reports      Report[]
+  integrations Integration[]
+}
+
+model Report {
+  id        String   @id @default(cuid())
+  clientId  String
+  month     Int
+  year      Int
+  status    String   @default("pending")
+  pdfUrl    String?
+  sentAt    DateTime?
+  createdAt DateTime @default(now())
+
+  client Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+}
+
+model Integration {
+  id           String   @id @default(cuid())
+  clientId     String
+  type         String
+  accessToken  String
+  refreshToken String?
+  expiresAt    DateTime?
+  createdAt    DateTime @default(now())
+
+  client Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+}

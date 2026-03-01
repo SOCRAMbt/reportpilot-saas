@@ -1,0 +1,16 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/generate-reports",
+      "schedule": "0 8 1 * *"
+    }
+  ],
+  "functions": {
+    "app/api/cron/generate-reports/route.ts": {
+      "maxDuration": 300
+    },
+    "app/api/reports/generate/route.ts": {
+      "maxDuration": 300
+    }
+  }
+}
