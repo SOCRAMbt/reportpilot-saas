@@ -79,22 +79,22 @@ export default function CEOChatClient() {
     };
 
     return (
-        <div className="flex flex-col h-[calc(100vh-80px)]">
+        <div className="flex flex-col h-[calc(100vh-140px)] rounded-xl border border-slate-800 bg-slate-900 overflow-hidden shadow-2xl">
             {/* Header */}
-            <div className="border-b border-white/10 px-6 py-4 bg-gradient-to-r from-blue-600/10 to-purple-600/10">
+            <div className="border-b border-white/10 px-6 py-4 bg-gradient-to-r from-blue-600/10 to-indigo-600/10">
                 <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-sm">
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold text-sm">
                         AR
                     </div>
                     <div>
                         <h2 className="font-bold text-white">Alex Rivera — CEO Técnico</h2>
                         <p className="text-xs text-gray-400">
-                            Conectado al sistema en tiempo real · Gemini 1.5 Flash
+                            Conectado al sistema en tiempo real · Gemini 2.5 Flash
                         </p>
                     </div>
                     <div className="ml-auto flex items-center gap-2">
                         <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                        <span className="text-xs text-green-400">Online</span>
+                        <span className="text-xs text-green-400 hidden sm:inline">Online</span>
                     </div>
                 </div>
             </div>
