@@ -6,7 +6,7 @@
     },
     {
       "path": "/api/cron/ceo-ops",
-      "schedule": "0 */1 * * *"
+      "schedule": "0 8 * * *"
     },
     {
       "path": "/api/cron/ceo-growth",
