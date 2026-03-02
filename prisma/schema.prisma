@@ -128,3 +128,14 @@ model BenchmarkLead {
   country   String?
   createdAt DateTime @default(now())
 }
+
+model BlogPost {
+  id          String   @id @default(cuid())
+  title       String
+  slug        String   @unique
+  excerpt     String   @db.Text
+  contentHtml String   @db.Text
+  seoKeywords String
+  publishedBy String   @default("Alex Rivera (AI)")
+  createdAt   DateTime @default(now())
+}

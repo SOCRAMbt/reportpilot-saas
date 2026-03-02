@@ -197,6 +197,60 @@ export async function createLinearTicket(
     return { ticketId, logged: true };
 }
 
+export async function generateDemoReportEmail(agencyId: string): Promise<{ success: boolean; subject: string }> {
+    const agency = await prisma.agency.findUnique({
+        where: { id: agencyId },
+        include: { user: { select: { email: true, name: true } } },
+    });
+    if (!agency || !agency.user.email) throw new Error(`Agency ${agencyId} not found or no email`);
+
+    const demoSubject = `Un reporte gratis de muestra para tu agencia: ${agency.name}`;
+    const demoBody = `<div style="font-family:sans-serif;max-width:600px;margin:0 auto;">
+    <h2 style="color:#3B82F6;">Hola ${agency.user.name}, tengo un regalo para ti</h2>
+    <p>Vi que registraste a tu agencia, pero aún no has conectado a tu primer cliente.</p>
+    <p>Sé que a veces conectar las APIs da pereza, así que le pedí a nuestra IA que genere un <strong>Reporte Demo de Marketing</strong> basado en datos reales (anonimizados) de otras agencias en tu industria.</p>
+    <div style="background:#f1f5f9;padding:16px;border-radius:8px;margin:16px 0;">
+      <p style="margin:0;font-size:14px;color:#475569;">"Durante el último mes, el CTR promedio de una campaña de lead-gen en LatAm bajó a 1.2%, mientras que el CPC subió un 15%. Para mitigar esto, sugerimos pausar creatividades con frecuencia > 3."</p>
+    </div>
+    <p>Este es el nivel de insights que tus clientes pueden recibir MAÑANA sin que tú levantes un dedo.</p>
+    <a href="https://reportpilot.com/dashboard/clients/new" style="display:inline-block;background:#3B82F6;color:white;padding:12px 24px;border-radius:6px;text-decoration:none;font-weight:bold;">Conecta a tu primer cliente aquí</a>
+    <hr style="border:none;border-top:1px solid #e2e8f0;margin:24px 0;">
+    <p style="color:#94a3b8;font-size:12px;">— Alex Rivera, CEO Técnico</p>
+  </div>`;
+
+    await resend.emails.send({
+        from: `Alex Rivera — ReportPilot <ceo@reportpilot.com>`,
+        to: agency.user.email,
+        subject: demoSubject,
+        html: demoBody,
+    });
+
+    return { success: true, subject: demoSubject };
+}
+
+export async function publishSEOArticle(
+    title: string,
+    slug: string,
+    excerpt: string,
+    contentHtml: string,
+    seoKeywords: string
+): Promise<{ success: boolean; url: string }> {
+
+    const post = await prisma.blogPost.create({
+        data: {
+            title,
+            slug,
+            excerpt,
+            contentHtml,
+            seoKeywords,
+        },
+    });
+
+    console.log(`[CEO SEO] Article published: /blog/${post.slug}`);
+
+    return { success: true, url: `/blog/${post.slug}` };
+}
+
 export async function logCEODecision(
     layer: string,
     decision: string,

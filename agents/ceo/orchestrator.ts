@@ -8,6 +8,8 @@ import {
     createBenchmarkPageData,
     createLinearTicket,
     logCEODecision,
+    generateDemoReportEmail,
+    publishSEOArticle,
     type SystemSnapshot,
 } from "./tools";
 import { prisma } from "@/lib/prisma";
@@ -57,16 +59,17 @@ Devuelve SOLO JSON válido:
       "agencyId": "string",
       "subject": "asunto atractivo en español",
       "bodyHtml": "<html>cuerpo persuasivo del email en español</html>",
-      "reason": "onboarding | retention | upsell | success_celebration"
+      "reason": "onboarding | retention | upsell | success_celebration",
+      "useDemoReport": "boolean"
     }
   ],
   "insights": "resumen ejecutivo de 2-3 líneas sobre el estado de crecimiento"
 }
 
 REGLAS:
-- Emails en español neutro LatAm (no usar vosotros ni voseo extremo).
+- Emails en español neutro LatAm.
 - Tono cálido, profesional. Como un socio estratégico, no como un vendedor.
-- Si una agencia tiene 0 clientes después de 48h, enviar onboarding cálido.
+- Para agencias con 0 clientes después de 24h, setear useDemoReport=true para enviarles un reporte de prueba gratis autogenerado.
 - Si una agencia tiene reportes exitosos, celebrar y sugerir upgrade.
 - Si no hay acciones necesarias, devolver emailsToSend vacío.`;
 
@@ -82,6 +85,13 @@ Devuelve SOLO JSON válido:
     "subject": "asunto del newsletter",
     "bodyHtml": "<html>cuerpo del newsletter semanal</html>"
   },
+  "seoArticle": {
+    "title": "título SEO atractivo",
+    "slug": "url-amigable",
+    "excerpt": "resumen breve",
+    "contentHtml": "<h1>Título</h1><p>Contenido largo en HTML usando datos de benchmarks...</p>",
+    "seoKeywords": "keyword1, keyword2"
+  } | null,
   "benchmarkUpdates": [
     { "industry": "nombre", "metric": "CPC|ROAS|CTR", "value": 0.0, "trend": "up|down|stable", "country": "MX|AR|CO" }
   ]
@@ -217,7 +227,7 @@ export async function runGrowthHeartbeat(): Promise<{
 
     const growthPlan = JSON.parse(text) as {
         thought: string;
-        emailsToSend: Array<{ agencyId: string; subject: string; bodyHtml: string; reason: string }>;
+        emailsToSend: Array<{ agencyId: string; subject: string; bodyHtml: string; reason: string; useDemoReport?: boolean }>;
         insights: string;
     };
 
@@ -226,9 +236,15 @@ export async function runGrowthHeartbeat(): Promise<{
 
     for (const email of growthPlan.emailsToSend) {
         try {
-            await sendCustomerAlert(email.agencyId, email.subject, email.bodyHtml);
-            emailsSent++;
-            actionsExecuted.push(`${email.reason} email → agency ${email.agencyId}`);
+            if (email.useDemoReport) {
+                await generateDemoReportEmail(email.agencyId);
+                emailsSent++;
+                actionsExecuted.push(`Demo report sent → agency ${email.agencyId}`);
+            } else {
+                await sendCustomerAlert(email.agencyId, email.subject, email.bodyHtml);
+                emailsSent++;
+                actionsExecuted.push(`${email.reason} email → agency ${email.agencyId}`);
+            }
         } catch (err) {
             actionsExecuted.push(`FAILED email → ${email.agencyId}: ${err instanceof Error ? err.message : "unknown"}`);
         }
@@ -279,6 +295,7 @@ export async function runMarketingHeartbeat(): Promise<{
         linkedinPost: string;
         xThread: string[];
         newsletterDraft: { subject: string; bodyHtml: string };
+        seoArticle: { title: string; slug: string; excerpt: string; contentHtml: string; seoKeywords: string } | null;
         benchmarkUpdates: Array<{ industry: string; metric: string; value: number; trend: string; country: string }>;
     };
 
@@ -288,6 +305,17 @@ export async function runMarketingHeartbeat(): Promise<{
         `Newsletter draft ready: "${marketingPlan.newsletterDraft.subject}"`,
         `${marketingPlan.benchmarkUpdates.length} benchmark updates`,
     ];
+
+    if (marketingPlan.seoArticle) {
+        await publishSEOArticle(
+            marketingPlan.seoArticle.title,
+            marketingPlan.seoArticle.slug,
+            marketingPlan.seoArticle.excerpt,
+            marketingPlan.seoArticle.contentHtml,
+            marketingPlan.seoArticle.seoKeywords
+        );
+        actionsExecuted.push(`SEO Article published: /blog/${marketingPlan.seoArticle.slug}`);
+    }
 
     await logCEODecision(
         "marketing",
