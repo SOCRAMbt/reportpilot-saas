@@ -1,90 +1,90 @@
 import { Resend } from "resend";
 import { getMonthName } from "@/lib/utils";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+const resend = new Resend(process.env.RESEND_API_KEY || "fallback_key");
 
 interface SendReportParams {
-    clientEmail: string;
-    clientName: string;
-    agencyName: string;
-    agencyLogoUrl: string | null;
-    agencyBrandColor: string;
-    executiveSummary: string;
-    pdfBuffer: Buffer;
-    month: number;
-    year: number;
+  clientEmail: string;
+  clientName: string;
+  agencyName: string;
+  agencyLogoUrl: string | null;
+  agencyBrandColor: string;
+  executiveSummary: string;
+  pdfBuffer: Buffer;
+  month: number;
+  year: number;
 }
 
 /**
  * Sends the monthly report email with PDF attachment
  */
 export async function sendReport(params: SendReportParams): Promise<void> {
-    const {
-        clientEmail,
-        clientName,
-        agencyName,
-        agencyBrandColor,
-        executiveSummary,
-        pdfBuffer,
-        month,
-        year,
-    } = params;
+  const {
+    clientEmail,
+    clientName,
+    agencyName,
+    agencyBrandColor,
+    executiveSummary,
+    pdfBuffer,
+    month,
+    year,
+  } = params;
 
-    const monthName = getMonthName(month);
-    const subject = `📊 Tu reporte de ${monthName} está listo, ${clientName}`;
-    const firstName = clientName.split(" ")[0];
+  const monthName = getMonthName(month);
+  const subject = `📊 Tu reporte de ${monthName} está listo, ${clientName}`;
+  const firstName = clientName.split(" ")[0];
 
-    const html = buildEmailTemplate({
-        firstName,
-        clientName,
-        agencyName,
-        agencyBrandColor,
-        executiveSummary,
-        monthName,
-        year,
+  const html = buildEmailTemplate({
+    firstName,
+    clientName,
+    agencyName,
+    agencyBrandColor,
+    executiveSummary,
+    monthName,
+    year,
+  });
+
+  try {
+    await resend.emails.send({
+      from: `${agencyName} <reportes@reportpilot.com>`,
+      to: clientEmail,
+      subject,
+      html,
+      attachments: [
+        {
+          filename: `Reporte-${monthName}-${year}-${clientName.replace(/\s+/g, "-")}.pdf`,
+          content: pdfBuffer,
+        },
+      ],
     });
-
-    try {
-        await resend.emails.send({
-            from: `${agencyName} <reportes@reportpilot.com>`,
-            to: clientEmail,
-            subject,
-            html,
-            attachments: [
-                {
-                    filename: `Reporte-${monthName}-${year}-${clientName.replace(/\s+/g, "-")}.pdf`,
-                    content: pdfBuffer,
-                },
-            ],
-        });
-    } catch (error) {
-        throw new Error(
-            `Failed to send email to ${clientEmail}: ${error instanceof Error ? error.message : "Unknown error"}`
-        );
-    }
+  } catch (error) {
+    throw new Error(
+      `Failed to send email to ${clientEmail}: ${error instanceof Error ? error.message : "Unknown error"}`
+    );
+  }
 }
 
 interface EmailTemplateParams {
-    firstName: string;
-    clientName: string;
-    agencyName: string;
-    agencyBrandColor: string;
-    executiveSummary: string;
-    monthName: string;
-    year: number;
+  firstName: string;
+  clientName: string;
+  agencyName: string;
+  agencyBrandColor: string;
+  executiveSummary: string;
+  monthName: string;
+  year: number;
 }
 
 function buildEmailTemplate(params: EmailTemplateParams): string {
-    const {
-        firstName,
-        agencyName,
-        agencyBrandColor,
-        executiveSummary,
-        monthName,
-        year,
-    } = params;
+  const {
+    firstName,
+    agencyName,
+    agencyBrandColor,
+    executiveSummary,
+    monthName,
+    year,
+  } = params;
 
-    return `<!DOCTYPE html>
+  return `<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="utf-8">
