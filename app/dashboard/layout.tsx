@@ -20,7 +20,7 @@ import { useState } from "react";
 const navItems = [
     { href: "/dashboard", label: "Panel", icon: LayoutDashboard },
     { href: "/dashboard/clients/new", label: "Nuevo Cliente", icon: Users },
-    { href: "/dashboard/ceo-chat", label: "CEO IA (Alex)", icon: Bot },
+    { href: "/ceo-chat", label: "CEO IA (Alex)", icon: Bot },
     { href: "/dashboard/settings", label: "Configuración", icon: Settings },
     { href: "/dashboard/billing", label: "Facturación", icon: CreditCard },
 ];

@@ -1,0 +1,64 @@
+﻿node.exe : Vercel CLI 50.22.1
+En línea: 1 Carácter: 1
++ & "C:\Program 
+Files\nodejs/node.exe" 
+"C:\Program 
+Files\nodejs/node_mo ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~
+    + CategoryInfo           
+   : NotSpecified: (Vercel   
+  CLI 50.22.1:String) [],    
+ RemoteException
+    + FullyQualifiedErrorId  
+   : NativeCommandError
+ 
+Retrieving projectÔÇª
+Deploying marcos-projects-bda
+7a55c/reportpilot
+Inspect: https://vercel.com/m
+arcos-projects-bda7a55c/repor
+tpilot/AEMc7MtdvqoVKYrDYnmyMf
+SrvFhX [3s]
+Production: https://reportpil
+ot-fqlypomup-marcos-projects-
+bda7a55c.vercel.app [3s]
+Building...
+Building...
+Building: Running build in 
+Washington, D.C., USA (East) 
+ÔÇô iad1
+Building: Build machine 
+configuration: 2 cores, 8 GB
+Building: Retrieving list of 
+deployment files...
+Building: Previous build 
+caches not available.
+Building: Downloading 1046 
+deployment files...
+Building: Using prebuilt 
+build artifacts from 
+.vercel/output
+Building: Learn more: https:/
+/vercel.link/build-output-api
+Building: [Error: ENOENT: no 
+such file or directory, stat 
+'/vercel/path0/.vercel/output
+/functions/_global-error.segm
+ents/__PAGE__.segment.rsc.fun
+c'] {
+Building: errno: -2,
+Building: code: 'ENOENT',
+Building: syscall: 'stat',
+Building: path: '/vercel/path
+0/.vercel/output/functions/_g
+lobal-error.segments/__PAGE__
+.segment.rsc.func'
+Building: }
+Error: ENOENT: no such file 
+or directory, stat '/vercel/p
+ath0/.vercel/output/functions
+/_global-error.segments/__PAG
+E__.segment.rsc.func'
+https://reportpilot-fqlypomup-marcos-projects-bda7a55c.vercel.app

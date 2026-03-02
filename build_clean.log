@@ -1,0 +1,101 @@
+﻿
+> reportpilot@0.1.0 build
+> next build
+
+node.exe : ÔÜá Warning: 
+Next.js inferred your 
+workspace root, but it may 
+not be correct.
+En línea: 1 Carácter: 1
++ & "C:\Program 
+Files\nodejs/node.exe" 
+"C:\Program 
+Files\nodejs/node_mo ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~
+    + CategoryInfo           
+   : NotSpecified: (ÔÜá War  
+  ning: Ne...not be correc   
+ t.:String) [], RemoteExc    
+eption
+    + FullyQualifiedErrorId  
+   : NativeCommandError
+ 
+ We detected multiple 
+lockfiles and selected the 
+directory of C:\Users\Marcos\
+package-lock.json as the 
+root directory.
+ To silence this warning, 
+set `turbopack.root` in your 
+Next.js config, or consider 
+removing one of the 
+lockfiles if it's not needed.
+   See https://nextjs.org/doc
+s/app/api-reference/config/ne
+xt-config-js/turbopack#root-d
+irectory for more 
+information.
+ Detected additional 
+lockfiles: 
+   * C:\Users\Marcos\.gemini\
+antigravity\scratch\reportpil
+ot\package-lock.json
+
+Ôû▓ Next.js 16.1.6 (Turbopack)
+- Environments: .env
+
+ÔÜá The "middleware" file 
+convention is deprecated. 
+Please use "proxy" instead. 
+Learn more: https://nextjs.or
+g/docs/messages/middleware-to
+-proxy
+  Creating an optimized production build ...
+Ô£ô Compiled successfully in 19.9s
+  Running TypeScript ...
+  Collecting page data using 7 workers ...
+  Generating static pages using 7 workers (0/26) ...
+  Generating static pages using 7 workers (6/26) 
+  Generating static pages using 7 workers (12/26) 
+  Generating static pages using 7 workers (19/26) 
+Ô£ô Generating static pages using 7 workers (26/26) in 4.2s
+  Finalizing page optimization ...
+
+Route (app)                      Revalidate  Expire
+Ôöî Ôùï /
+Ôö£ Ôùï /_not-found
+Ôö£ ãÆ /api/agency
+Ôö£ ãÆ /api/auth/[...nextauth]
+Ôö£ ãÆ /api/benchmarks
+Ôö£ ãÆ /api/ceo-chat
+Ôö£ ãÆ /api/clients
+Ôö£ ãÆ /api/cron/ai-manager
+Ôö£ ãÆ /api/cron/ceo-growth
+Ôö£ ãÆ /api/cron/ceo-marketing
+Ôö£ ãÆ /api/cron/ceo-ops
+Ôö£ ãÆ /api/cron/generate-reports
+Ôö£ ãÆ /api/cron/system-manager
+Ôö£ ãÆ /api/reports/generate
+Ôö£ ãÆ /api/setup/check
+Ôö£ ãÆ /api/stripe/create-checkout
+Ôö£ ãÆ /api/webhooks/stripe
+Ôö£ Ôùï /benchmarks
+Ôö£ Ôùï /blog                                1h      1y
+Ôö£ ãÆ /blog/[slug]
+Ôö£ ãÆ /dashboard
+Ôö£ ãÆ /dashboard/billing
+Ôö£ ãÆ /dashboard/ceo-chat
+Ôö£ ãÆ /dashboard/clients/[id]
+Ôö£ ãÆ /dashboard/clients/new
+Ôö£ ãÆ /dashboard/settings
+Ôö£ Ôùï /login
+Ôöö Ôùï /setup
+
+
+ãÆ Proxy (Middleware)
+
+Ôùï  (Static)   prerendered as static content
+ãÆ  (Dynamic)  server-rendered on demand
+

@@ -1,0 +1,131 @@
+﻿node.exe : Vercel CLI 50.22.1
+En línea: 1 Carácter: 1
++ & "C:\Program 
+Files\nodejs/node.exe" 
+"C:\Program 
+Files\nodejs/node_mo ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~
+    + CategoryInfo           
+   : NotSpecified: (Vercel   
+  CLI 50.22.1:String) [],    
+ RemoteException
+    + FullyQualifiedErrorId  
+   : NativeCommandError
+ 
+WARN! Build not running on 
+Vercel. System environment 
+variables will not be 
+available.
+Installing dependencies...
+
+up to date in 2s
+
+172 packages are looking for funding
+  run `npm fund` for details
+Detected Next.js version: 16.1.6
+Running "npm run build"
+
+> reportpilot@0.1.0 build
+> next build
+
+Attention: Next.js now collects completely anonymous telemetry regarding usage.
+This information is used to shape Next.js' roadmap and prioritize features.
+You can learn more, including how to opt-out if you'd not like to participate in this anonymous program, by visiting the following URL:
+https://nextjs.org/telemetry
+
+Ôû▓ Next.js 16.1.6 (Turbopack)
+- Environments: .env
+
+ÔÜá The "middleware" file 
+convention is deprecated. 
+Please use "proxy" instead. 
+Learn more: https://nextjs.or
+g/docs/messages/middleware-to
+-proxy
+  Creating an optimized production build ...
+Ô£ô Compiled successfully in 19.3s
+  Running TypeScript ...
+  Collecting page data using 7 workers ...
+  Generating static pages using 7 workers (0/27) ...
+  Generating static pages using 7 workers (6/27) 
+  Generating static pages using 7 workers (13/27) 
+  Generating static pages using 7 workers (20/27) 
+Ô£ô Generating static pages using 7 workers (27/27) in 3.7s
+  Finalizing page optimization ...
+
+Route (app)                      Revalidate  Expire
+Ôöî Ôùï /
+Ôö£ Ôùï /_not-found
+Ôö£ ãÆ /api/agency
+Ôö£ ãÆ /api/auth/[...nextauth]
+Ôö£ ãÆ /api/benchmarks
+Ôö£ ãÆ /api/ceo-chat
+Ôö£ ãÆ /api/clients
+Ôö£ ãÆ /api/cron/ai-manager
+Ôö£ ãÆ /api/cron/ceo-growth
+Ôö£ ãÆ /api/cron/ceo-marketing
+Ôö£ ãÆ /api/cron/ceo-ops
+Ôö£ ãÆ /api/cron/generate-reports
+Ôö£ ãÆ /api/cron/system-manager
+Ôö£ ãÆ /api/reports/generate
+Ôö£ ãÆ /api/setup/check
+Ôö£ ãÆ /api/stripe/create-checkout
+Ôö£ ãÆ /api/webhooks/stripe
+Ôö£ Ôùï /benchmarks
+Ôö£ Ôùï /blog                                1h      1y
+Ôö£ ãÆ /blog/[slug]
+Ôö£ Ôùï /ceo-chat
+Ôö£ ãÆ /dashboard
+Ôö£ ãÆ /dashboard/billing
+Ôö£ ãÆ /dashboard/clients/[id]
+Ôö£ ãÆ /dashboard/clients/new
+Ôö£ ãÆ /dashboard/settings
+Ôö£ Ôùï /login
+Ôöö Ôùï /setup
+
+
+ãÆ Proxy (Middleware)
+
+Ôùï  (Static)   prerendered as static content
+ãÆ  (Dynamic)  server-rendered on demand
+
+Tracing initial Next.js server files due to missing build trace: 12.358s
+Traced Next.js server files in: 13.203s
+Tracing entries due to missing build traces:
+[
+  "C:/Users/Marcos/.gemini/antigravity/scratch/reportpilot/.next/server/app/_global-error/page.js",
+  "C:/Users/Marcos/.gemini/antigravity/scratch/reportpilot/.next/server/app/_not-found/page.js",
+  "C:/Users/Marcos/.gemini/antigravity/scratch/reportpilot/.next/server/app/benchmarks/page.js",
+  "C:/Users/Marcos/.gemini/antigravity/scratch/reportpilot/.next/server/app/blog/[slug]/page.js",
+  "C:/Users/Marcos/.gemini/antigravity/scratch/reportpilot/.next/server/app/blog/page.js",
+  "C:/Users/Marcos/.gemini/antigravity/scratch/reportpilot/.next/server/app/ceo-chat/page.js",
+  "C:/Users/Marcos/.gemini/antigravity/scratch/reportpilot/.next/server/app/dashboard/billing/page.js",
+  "C:/Users/Marcos/.gemini/antigravity/scratch/reportpilot/.next/server/app/dashboard/clients/[id]/page.js",
+  "C:/Users/Marcos/.gemini/antigravity/scratch/reportpilot/.next/server/app/dashboard/clients/new/page.js",
+  "C:/Users/Marcos/.gemini/antigravity/scratch/reportpilot/.next/server/app/dashboard/page.js",
+  "C:/Users/Marcos/.gemini/antigravity/scratch/reportpilot/.next/server/app/dashboard/settings/page.js",
+  "C:/Users/Marcos/.gemini/antigravity/scratch/reportpilot/.next/server/app/login/page.js",
+  "C:/Users/Marcos/.gemini/antigravity/scratch/reportpilot/.next/server/app/setup/page.js",
+  "C:/Users/Marcos/.gemini/antigravity/scratch/reportpilot/.next/server/app/api/agency/route.js",
+  "C:/Users/Marcos/.gemini/antigravity/scratch/reportpilot/.next/server/app/api/auth/[...nextauth]/route.js",
+  "C:/Users/Marcos/.gemini/antigravity/scratch/reportpilot/.next/server/app/api/benchmarks/route.js",
+  "C:/Users/Marcos/.gemini/antigravity/scratch/reportpilot/.next/server/app/api/ceo-chat/route.js",
+  "C:/Users/Marcos/.gemini/antigravity/scratch/reportpilot/.next/server/app/api/clients/route.js",
+  "C:/Users/Marcos/.gemini/antigravity/scratch/reportpilot/.next/server/app/api/cron/ai-manager/route.js",
+  "C:/Users/Marcos/.gemini/antigravity/scratch/reportpilot/.next/server/app/api/cron/ceo-growth/route.js",
+  "C:/Users/Marcos/.gemini/antigravity/scratch/reportpilot/.next/server/app/api/cron/ceo-marketing/route.js",
+  "C:/Users/Marcos/.gemini/antigravity/scratch/reportpilot/.next/server/app/api/cron/ceo-ops/route.js",
+  "C:/Users/Marcos/.gemini/antigravity/scratch/reportpilot/.next/server/app/api/cron/generate-reports/route.js",
+  "C:/Users/Marcos/.gemini/antigravity/scratch/reportpilot/.next/server/app/api/cron/system-manager/route.js",
+  "C:/Users/Marcos/.gemini/antigravity/scratch/reportpilot/.next/server/app/api/reports/generate/route.js",
+  "C:/Users/Marcos/.gemini/antigravity/scratch/reportpilot/.next/server/app/api/setup/check/route.js",
+  "C:/Users/Marcos/.gemini/antigravity/scratch/reportpilot/.next/server/app/api/stripe/create-checkout/route.js",
+  "C:/Users/Marcos/.gemini/antigravity/scratch/reportpilot/.next/server/app/api/webhooks/stripe/route.js",
+  "C:/Users/Marcos/.gemini/antigravity/scratch/reportpilot/.next/server/app/favicon.ico/route.js"
+]: 66.627ms
+Created all serverless functions in: 165.26ms
+Collected static files (public/, static/, .next/static): 8.045ms
+Build Completed in 
+.vercel\output [1m]
