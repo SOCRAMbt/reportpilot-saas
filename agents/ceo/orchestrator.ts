@@ -98,7 +98,7 @@ export async function runOpsHeartbeat(): Promise<{
     const actionsExecuted: string[] = [];
 
     const model = genAI.getGenerativeModel({
-        model: "gemini-1.5-flash",
+        model: "gemini-2.5-flash",
         systemInstruction: CEO_SYSTEM_PROMPT,
     });
 
@@ -198,7 +198,7 @@ export async function runGrowthHeartbeat(): Promise<{
     }));
 
     const model = genAI.getGenerativeModel({
-        model: "gemini-1.5-flash",
+        model: "gemini-2.5-flash",
         systemInstruction: GROWTH_SYSTEM_PROMPT,
     });
 
@@ -257,7 +257,7 @@ export async function runMarketingHeartbeat(): Promise<{
     const benchmarks = await createBenchmarkPageData();
 
     const model = genAI.getGenerativeModel({
-        model: "gemini-1.5-flash",
+        model: "gemini-2.5-flash",
         systemInstruction: MARKETING_SYSTEM_PROMPT,
     });
 
@@ -314,7 +314,7 @@ export async function chatWithCEO(
     const snapshot = await getSystemSnapshot();
 
     const model = genAI.getGenerativeModel({
-        model: "gemini-1.5-flash",
+        model: "gemini-2.5-flash",
         systemInstruction: `Eres Alex Rivera, CEO Técnico de ReportPilot. 
 Estás en una conversación directa con Marcos, el fundador humano.
 Tienes acceso al estado real del sistema. Sé conciso, directo, estratégico.

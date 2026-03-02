@@ -50,7 +50,7 @@ export async function POST(req: Request) {
 
         // 2. Hacer que Gemini actúe como System Manager para razonar sobre estos datos
         const model = genAI.getGenerativeModel({
-            model: "gemini-1.5-flash",
+            model: "gemini-2.5-flash",
             systemInstruction: SYSTEM_PROMPT,
         });
 
