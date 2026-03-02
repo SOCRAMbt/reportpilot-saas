@@ -5,12 +5,16 @@
       "schedule": "0 8 1 * *"
     },
     {
-      "path": "/api/cron/ai-manager",
+      "path": "/api/cron/ceo-ops",
+      "schedule": "0 */1 * * *"
+    },
+    {
+      "path": "/api/cron/ceo-growth",
       "schedule": "0 9 * * *"
     },
     {
-      "path": "/api/cron/system-manager",
-      "schedule": "0 0 * * *"
+      "path": "/api/cron/ceo-marketing",
+      "schedule": "0 10 */2 * *"
     }
   ],
   "functions": {
@@ -19,6 +23,15 @@
     },
     "app/api/reports/generate/route.ts": {
       "maxDuration": 300
+    },
+    "app/api/cron/ceo-ops/route.ts": {
+      "maxDuration": 60
+    },
+    "app/api/cron/ceo-growth/route.ts": {
+      "maxDuration": 120
+    },
+    "app/api/cron/ceo-marketing/route.ts": {
+      "maxDuration": 120
     }
   }
 }

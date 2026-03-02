@@ -109,3 +109,22 @@ model Integration {
 
   client Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
 }
+
+model AuditLog {
+  id           String   @id @default(cuid())
+  timestamp    DateTime @default(now())
+  layer        String   // "ops" | "growth" | "marketing"
+  decision     String   // FIX_ERROR, SEND_SUCCESS_EMAIL, GENERATE_MARKETING, PAUSE_CLIENT, BENCHMARK_UPDATE, ALERT_HUMAN
+  thought      String   @db.Text
+  actionsTaken String   @db.Text // JSON stringified array
+  impact       String?  @db.Text
+  ticketJson   String?  @db.Text // JSON stringified ticket for human
+}
+
+model BenchmarkLead {
+  id        String   @id @default(cuid())
+  email     String
+  industry  String?
+  country   String?
+  createdAt DateTime @default(now())
+}
