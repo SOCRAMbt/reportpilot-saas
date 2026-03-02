@@ -16,22 +16,5 @@
       "path": "/api/cron/ceo-marketing",
       "schedule": "0 10 */2 * *"
     }
-  ],
-  "functions": {
-    "app/api/cron/generate-reports/route.ts": {
-      "maxDuration": 300
-    },
-    "app/api/reports/generate/route.ts": {
-      "maxDuration": 300
-    },
-    "app/api/cron/ceo-ops/route.ts": {
-      "maxDuration": 60
-    },
-    "app/api/cron/ceo-growth/route.ts": {
-      "maxDuration": 120
-    },
-    "app/api/cron/ceo-marketing/route.ts": {
-      "maxDuration": 120
-    }
-  }
+  ]
 }
