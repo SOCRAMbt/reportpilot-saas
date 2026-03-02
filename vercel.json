@@ -7,6 +7,10 @@
     {
       "path": "/api/cron/ai-manager",
       "schedule": "0 9 * * *"
+    },
+    {
+      "path": "/api/cron/system-manager",
+      "schedule": "0 0 * * *"
     }
   ],
   "functions": {
