@@ -46,6 +46,11 @@ ENV/
 .env
 .env.local
 .env.*.local
+.env.backup
+.env.example.bak
+backend/.env
+backend/.env.backup
+backend/.env.example
 
 # ============================================
 # Logs

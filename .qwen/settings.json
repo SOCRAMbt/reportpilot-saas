@@ -23,7 +23,10 @@
       "Bash(git remote *)",
       "Bash(git fetch *)",
       "Bash(git checkout *)",
-      "Bash(git add *)"
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(git push *)",
+      "Bash(git rm *)"
     ]
   },
   "$version": 3

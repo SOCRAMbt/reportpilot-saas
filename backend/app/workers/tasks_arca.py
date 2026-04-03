@@ -225,7 +225,7 @@ def consultar_estado_arca(self, comprobante_id: int, tenant_id: int):
             )
 
             if estado:
-                comprobante.estado_arca = estado["estado"]
+                comprobante.estado_arca = estado.get("estado", comprobante.estado_arca)
                 comprobante.estado_arca_detalle = estado.get("detalle", "")
                 comprobante.fecha_consulta_arca = datetime.now()
                 await session.commit()

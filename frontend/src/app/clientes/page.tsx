@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { DashboardLayout } from '@/components/DashboardLayout'
-import { Users, Search, Plus, ChevronRight } from 'lucide-react'
+import { Users, Search, Plus, ChevronRight, AlertTriangle, CheckCircle, AlertCircle } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import api from '@/lib/api'
 
@@ -16,6 +16,36 @@ interface Cliente {
   email?: string
   telefono?: string
   activo: boolean
+  riesgo_fiscal?: {
+    riesgo_exclusion: boolean
+    urgencia_alerta: boolean
+    categoria_calculada: string
+    categoria_actual: string
+    triggers_activados: string[]
+  }
+}
+
+function getRiesgoLevel(cliente: Cliente): 'verde' | 'amarillo' | 'rojo' {
+  const riesgo = cliente.riesgo_fiscal
+  if (!riesgo) return 'verde'
+  if (riesgo.riesgo_exclusion || riesgo.triggers_activados?.length > 0) return 'rojo'
+  if (riesgo.urgencia_alerta || riesgo.categoria_calculada > riesgo.categoria_actual) return 'amarillo'
+  return 'verde'
+}
+
+function RiesgoBadge({ nivel }: { nivel: 'verde' | 'amarillo' | 'rojo' }) {
+  const config = {
+    verde: { icon: CheckCircle, label: 'Sin riesgo', cls: 'text-emerald-600 bg-emerald-50' },
+    amarillo: { icon: AlertCircle, label: 'Atencion', cls: 'text-amber-600 bg-amber-50' },
+    rojo: { icon: AlertTriangle, label: 'Riesgo', cls: 'text-red-600 bg-red-50' },
+  }
+  const { icon: Icon, label, cls } = config[nivel]
+  return (
+    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${cls}`}>
+      <Icon className="h-3 w-3" />
+      {label}
+    </span>
+  )
 }
 
 export default function ClientesPage() {
@@ -27,11 +57,9 @@ export default function ClientesPage() {
       const params = new URLSearchParams()
       if (busqueda) params.set('busqueda', busqueda)
       const { data } = await api.get(`/clientes?${params}`)
-      return data
+      return data as Cliente[]
     },
   })
-
-  const clientes = clientesData?.clientes || []
 
   return (
     <DashboardLayout>
@@ -40,7 +68,7 @@ export default function ClientesPage() {
         <div className="page-header">
           <div>
             <h1 className="page-title">Clientes</h1>
-            <p className="page-subtitle">Gestión de clientes del estudio</p>
+            <p className="page-subtitle">Gestion de clientes del estudio</p>
           </div>
           <button className="btn-primary">
             <Plus className="h-5 w-5 mr-2" />
@@ -69,52 +97,55 @@ export default function ClientesPage() {
               <div key={i} className="card skeleton h-48" />
             ))}
           </div>
-        ) : clientes.length > 0 ? (
+        ) : clientesData && clientesData.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {clientes.map((cliente: Cliente) => (
-              <div key={cliente.id} className="card card-hover">
-                <div className="flex justify-between items-start mb-3">
-                  <div>
-                    <h3 className="font-semibold text-slate-900">{cliente.razon_social}</h3>
-                    {cliente.nombre_fantasia && (
-                      <p className="text-sm text-slate-500">{cliente.nombre_fantasia}</p>
-                    )}
+            {clientesData.map((cliente: Cliente) => {
+              const nivel = getRiesgoLevel(cliente)
+              return (
+                <div key={cliente.id} className="card card-hover">
+                  <div className="flex justify-between items-start mb-3">
+                    <div>
+                      <h3 className="font-semibold text-slate-900">{cliente.razon_social}</h3>
+                      {cliente.nombre_fantasia && (
+                        <p className="text-sm text-slate-500">{cliente.nombre_fantasia}</p>
+                      )}
+                    </div>
+                    <RiesgoBadge nivel={nivel} />
                   </div>
-                  <span className="semaforo-verde" title="Sin riesgo" />
-                </div>
 
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-slate-500">CUIT:</span>
-                    <span className="font-mono">{cliente.cuit}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-slate-500">Categoría:</span>
-                    <span className="badge badge-blue">
-                      {cliente.categoria_monotributo || 'N/A'}
-                    </span>
-                  </div>
-                  {cliente.email && (
+                  <div className="space-y-2 text-sm">
                     <div className="flex justify-between">
-                      <span className="text-slate-500">Email:</span>
-                      <span className="text-slate-700 truncate max-w-[150px]">
-                        {cliente.email}
+                      <span className="text-slate-500">CUIT:</span>
+                      <span className="font-mono">{cliente.cuit}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-500">Categoria:</span>
+                      <span className="badge badge-blue">
+                        {cliente.categoria_monotributo || cliente.riesgo_fiscal?.categoria_actual || 'N/A'}
                       </span>
                     </div>
-                  )}
-                </div>
+                    {cliente.email && (
+                      <div className="flex justify-between">
+                        <span className="text-slate-500">Email:</span>
+                        <span className="text-slate-700 truncate max-w-[150px]">
+                          {cliente.email}
+                        </span>
+                      </div>
+                    )}
+                  </div>
 
-                <div className="mt-4 pt-4 border-t border-slate-100">
-                  <Link
-                    href={`/clientes/${cliente.id}`}
-                    className="btn-secondary btn-sm w-full flex items-center justify-center"
-                  >
-                    Ver detalle
-                    <ChevronRight className="h-4 w-4 ml-1" />
-                  </Link>
+                  <div className="mt-4 pt-4 border-t border-slate-100">
+                    <Link
+                      href={`/clientes/${cliente.id}`}
+                      className="btn-secondary btn-sm w-full flex items-center justify-center"
+                    >
+                      Ver detalle
+                      <ChevronRight className="h-4 w-4 ml-1" />
+                    </Link>
+                  </div>
                 </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
         ) : (
           <div className="card">
@@ -123,7 +154,7 @@ export default function ClientesPage() {
               <p className="text-slate-500">
                 {busqueda ? 'No se encontraron clientes' : 'No hay clientes cargados'}
               </p>
-              { !busqueda && (
+              {!busqueda && (
                 <button className="btn-primary mt-4">
                   <Plus className="h-4 w-4 mr-2" />
                   Cargar primer cliente
