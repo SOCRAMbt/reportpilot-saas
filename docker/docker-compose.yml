@@ -1,0 +1,212 @@
+version: '3.9'
+
+services:
+  # ============================================
+  # PostgreSQL - Base de Datos Principal
+  # ============================================
+  postgres:
+    image: postgres:16-alpine
+    container_name: accountantos-db
+    environment:
+      POSTGRES_DB: accountantos
+      POSTGRES_USER: accountantos
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD:-cambiar_password_seguro}
+      POSTGRES_INITDB_ARGS: "--encoding=UTF-8 --lc-collate=C --lc-ctype=C"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "5432:5432"
+    networks:
+      - accountantos-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U accountantos -d accountantos"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # ============================================
+  # Redis - Caché y Cola de Tareas
+  # ============================================
+  redis:
+    image: redis:7-alpine
+    container_name: accountantos-redis
+    command: redis-server --appendonly no --save "" --maxmemory 256mb --maxmemory-policy allkeys-lru
+    # IMPORTANTE: --appendonly no y --save "" desactivan persistencia
+    # Los tokens WSAA son efímeros (2hs TTL) y NO deben persistir
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+    networks:
+      - accountantos-net
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # ============================================
+  # Redis - Rate Limiting (separado)
+  # ============================================
+  redis-ratelimit:
+    image: redis:7-alpine
+    container_name: accountantos-redis-ratelimit
+    command: redis-server --appendonly no --save ""
+    ports:
+      - "6380:6379"
+    networks:
+      - accountantos-net
+    restart: unless-stopped
+
+  # ============================================
+  # Backend API - FastAPI
+  # ============================================
+  backend:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
+    container_name: accountantos-backend
+    env_file:
+      - ../backend/.env
+    environment:
+      DATABASE_URL: postgresql://accountantos:${DATABASE_PASSWORD:-cambiar_password_seguro}@postgres:5432/accountantos
+      REDIS_URL: redis://redis:6379/0
+      CELERY_BROKER_URL: redis://redis:6379/1
+    volumes:
+      - ../backend:/app
+      - ${ARCA_CERT_PATH:-./certs}:/app/certs:ro
+      - ${GOOGLE_CLOUD_KEY_PATH:-./gcp}:/app/gcp:ro
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - accountantos-net
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    restart: unless-stopped
+
+  # ============================================
+  # Celery Worker - Tareas Asíncronas
+  # ============================================
+  celery-worker:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
+    container_name: accountantos-celery
+    env_file:
+      - ../backend/.env
+    environment:
+      DATABASE_URL: postgresql://accountantos:${DATABASE_PASSWORD:-cambiar_password_seguro}@postgres:5432/accountantos
+      REDIS_URL: redis://redis:6379/0
+      CELERY_BROKER_URL: redis://redis:6379/1
+    volumes:
+      - ../backend:/app
+      - ${ARCA_CERT_PATH:-./certs}:/app/certs:ro
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - accountantos-net
+    command: celery -A app.workers.celery_app worker --loglevel=info --concurrency=4
+    restart: unless-stopped
+
+  # ============================================
+  # Celery Beat - Tareas Programadas
+  # ============================================
+  celery-beat:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
+    container_name: accountantos-celery-beat
+    env_file:
+      - ../backend/.env
+    environment:
+      DATABASE_URL: postgresql://accountantos:${DATABASE_PASSWORD:-cambiar_password_seguro}@postgres:5432/accountantos
+      REDIS_URL: redis://redis:6379/0
+      CELERY_BROKER_URL: redis://redis:6379/1
+    volumes:
+      - ../backend:/app
+    depends_on:
+      - redis
+    networks:
+      - accountantos-net
+    command: celery -A app.workers.celery_app beat --loglevel=info
+    restart: unless-stopped
+
+  # ============================================
+  # Flower - Monitoreo de Celery
+  # ============================================
+  flower:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
+    container_name: accountantos-flower
+    env_file:
+      - ../backend/.env
+    environment:
+      CELERY_BROKER_URL: redis://redis:6379/1
+    ports:
+      - "5555:5555"
+    depends_on:
+      - redis
+    networks:
+      - accountantos-net
+    command: celery -A app.workers.celery_app flower --port=5555
+    restart: unless-stopped
+
+  # ============================================
+  # Frontend - Next.js
+  # ============================================
+  frontend:
+    build:
+      context: ../frontend
+      dockerfile: Dockerfile
+    container_name: accountantos-frontend
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8000
+      NEXT_PUBLIC_WS_URL: ws://localhost:8000/ws
+    volumes:
+      - ../frontend:/app
+      - /app/node_modules
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    networks:
+      - accountantos-net
+    command: npm run dev
+    restart: unless-stopped
+
+  # ============================================
+  # NTP Sync - Sincronización horaria ARCA
+  # ============================================
+  ntp-sync:
+    image: alpine:latest
+    container_name: accountantos-ntp
+    command: >
+      sh -c "
+        apk add --no-cache sntp &&
+        while true; do
+          sntp time.afip.gov.ar;
+          sleep 300;
+        done
+      "
+    networks:
+      - accountantos-net
+    restart: unless-stopped
+
+networks:
+  accountantos-net:
+    driver: bridge
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
