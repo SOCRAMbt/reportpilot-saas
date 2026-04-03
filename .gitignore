@@ -50,7 +50,6 @@ ENV/
 .env.example.bak
 backend/.env
 backend/.env.backup
-backend/.env.example
 
 # ============================================
 # Logs

@@ -38,10 +38,10 @@ celery_app.conf.update(
 # ============================================
 
 celery_app.conf.beat_schedule = {
-    # Descarga masiva de comprobantes (nocturna)
+    # Descarga masiva de comprobantes (ventana nocturna 02:00-05:00)
     "descarga-masiva-comprobantes": {
         "task": "app.workers.tasks_arca.descargar_comprobantes_nocturno",
-        "schedule": 60.0 * 60 * 1,  # Cada 1 hora entre 02:00-05:00
+        "schedule": crontab(hour='2,3,4', minute=0),
         "options": {"queue": "arca"},
     },
 

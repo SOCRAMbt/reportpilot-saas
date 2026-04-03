@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import {
   LayoutDashboard,
   FileText,
@@ -30,6 +30,12 @@ const navigation = [
 export function DashboardLayout({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const pathname = usePathname() || '/'
+  const router = useRouter()
+
+  const handleLogout = () => {
+    localStorage.removeItem('accountantos_token')
+    router.push('/login')
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -137,7 +143,10 @@ function SidebarContent({ pathname }: { pathname: string }) {
 
       {/* Footer del sidebar */}
       <div className="border-t border-slate-200 p-4">
-        <button className="flex w-full items-center px-3 py-2 text-sm text-slate-600 hover:bg-slate-50 rounded-lg transition-colors">
+        <button
+          onClick={handleLogout}
+          className="flex w-full items-center px-3 py-2 text-sm text-slate-600 hover:bg-slate-50 rounded-lg transition-colors"
+        >
           <LogOut className="h-5 w-5 mr-3" />
           Cerrar sesión
         </button>

@@ -12,6 +12,7 @@ ADVERTENCIA: Usar SOLO Vertex AI con Enterprise Agreement (ZDR garantizado)
 NO usar api.generativeai.google.com (API pública sin ZDR)
 """
 
+import base64
 import json
 import logging
 import re
@@ -322,7 +323,7 @@ class OCRPipeline:
                 {
                     "inline_data": {
                         "mime_type": "image/jpeg",
-                        "data": imagen_bytes.hex()  # Vertex AI espera hex
+                        "data": base64.b64encode(imagen_bytes).decode("utf-8")
                     }
                 },
                 {

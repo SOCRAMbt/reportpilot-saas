@@ -151,6 +151,7 @@ def upgrade() -> None:
         sa.Column('descripcion', sa.Text()),
         sa.Column('fecha_vigencia_desde', sa.Date(), nullable=False),
         sa.Column('fecha_vigencia_hasta', sa.Date()),
+        sa.Column('fuente_normativa', sa.String(length=200)),
         sa.Column('creado_por', sa.Integer(), sa.ForeignKey('usuarios.id')),
         sa.Column('creado_en', sa.DateTime(timezone=True), server_default=sa.func.now()),
         sa.Index('ix_parametros_fiscales_id', 'id'),

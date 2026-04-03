@@ -185,6 +185,7 @@ class ParametroFiscal(Base):
     descripcion = Column(Text)
     fecha_vigencia_desde = Column(Date, nullable=False, index=True)
     fecha_vigencia_hasta = Column(Date, index=True)
+    fuente_normativa = Column(String(200))
     creado_por = Column(Integer, ForeignKey("usuarios.id"))
     creado_en = Column(DateTime(timezone=True), server_default=func.now())
 

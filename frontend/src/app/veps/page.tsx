@@ -72,7 +72,7 @@ export default function VEPsPage() {
 
         {/* Banner de vencimientos */}
         <div className="alert alert-yellow">
-          <Calendar className="h-5 w-5 flex-shrink-0" />
+          <AlertTriangle className="h-5 w-5 flex-shrink-0" />
           <div>
             <p className="font-semibold">Vencimientos próximos</p>
             <p className="text-sm">3 VEPs vencen en los próximos 7 días</p>

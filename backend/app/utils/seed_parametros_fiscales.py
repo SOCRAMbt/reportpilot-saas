@@ -30,9 +30,9 @@ PARAMETROS_2026 = {
             "K": {"ingresos_brutos_anual": 20000000, "alquileres_anual": 3333333, "precio_unitario_max": 0, "cuota_mensual": 120000},
         },
         "descripcion": "Categorías Monotributo 2026 — servicios [VERIFICAR con RG ARCA vigente]",
-        "fuente": "RG ARCA [VERIFICAR NÚMERO] / Ley 27.743"
+        "fuente_normativa": "RG ARCA [VERIFICAR NÚMERO] / Ley 27.743"
     },
-    "monotribito_cuotas_2026": {
+    "monotributo_cuotas_2026": {
         "vigencia_desde": date(2026, 1, 1),
         "vigencia_hasta": None,
         "valor": {
@@ -40,21 +40,21 @@ PARAMETROS_2026 = {
             "F": 35000, "G": 45000, "H": 60000, "I": 75000, "J": 95000, "K": 120000
         },
         "descripcion": "Cuotas mensuales Monotributo 2026 [VERIFICAR]",
-        "fuente": "RG ARCA [VERIFICAR NÚMERO]"
+        "fuente_normativa": "RG ARCA [VERIFICAR NÚMERO]"
     },
-    "monotribito_tope_maximo_anual": {
+    "monotributo_tope_maximo_anual": {
         "vigencia_desde": date(2026, 1, 1),
         "vigencia_hasta": None,
         "valor": 20000000,
         "descripcion": "Tope máximo anual Monotributo — exclusión inmediata",
-        "fuente": "Ley 27.743"
+        "fuente_normativa": "Ley 27.743"
     },
-    "monotribito_precio_unitario_maximo": {
+    "monotributo_precio_unitario_maximo": {
         "vigencia_desde": date(2026, 1, 1),
         "vigencia_hasta": None,
         "valor": 0,
         "descripcion": "Precio unitario máximo — 0 = sin tope configurado [VERIFICAR]",
-        "fuente": "RG ARCA [VERIFICAR NÚMERO]"
+        "fuente_normativa": "RG ARCA [VERIFICAR NÚMERO]"
     }
 }
 
@@ -86,7 +86,7 @@ async def seed():
             if param:
                 param.valor = datos["valor"]
                 param.descripcion = datos.get("descripcion", "")
-                param.fuente_normativa = datos.get("fuente", "")
+                param.fuente_normativa = datos.get("fuente_normativa", "")
                 param.fecha_vigencia_hasta = datos.get("vigencia_hasta")
                 actualizados += 1
                 logger.info(f"  ✏️  Actualizado: {nombre}")

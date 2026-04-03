@@ -36,7 +36,7 @@ function getRiesgoLevel(cliente: Cliente): 'verde' | 'amarillo' | 'rojo' {
 function RiesgoBadge({ nivel }: { nivel: 'verde' | 'amarillo' | 'rojo' }) {
   const config = {
     verde: { icon: CheckCircle, label: 'Sin riesgo', cls: 'text-emerald-600 bg-emerald-50' },
-    amarillo: { icon: AlertCircle, label: 'Atencion', cls: 'text-amber-600 bg-amber-50' },
+    amarillo: { icon: AlertCircle, label: 'Atención', cls: 'text-amber-600 bg-amber-50' },
     rojo: { icon: AlertTriangle, label: 'Riesgo', cls: 'text-red-600 bg-red-50' },
   }
   const { icon: Icon, label, cls } = config[nivel]

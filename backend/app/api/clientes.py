@@ -73,7 +73,7 @@ async def listar_clientes(
                 or_(
                     Cliente.cuit.like(f"%{busqueda}%"),
                     Cliente.razon_social.ilike(f"%{busqueda}%"),
-                    Cliente.nombre_fantasia.ilike(f"%{busqueda}%") if Cliente.nombre_fantasia is not None else False
+                    Cliente.nombre_fantasia.ilike(f"%{busqueda}%"),
                 )
             )
         else:
@@ -81,7 +81,7 @@ async def listar_clientes(
             query = query.where(
                 or_(
                     Cliente.razon_social.ilike(f"%{busqueda}%"),
-                    Cliente.nombre_fantasia.ilike(f"%{busqueda}%") if Cliente.nombre_fantasia is not None else False
+                    Cliente.nombre_fantasia.ilike(f"%{busqueda}%"),
                 )
             )
 

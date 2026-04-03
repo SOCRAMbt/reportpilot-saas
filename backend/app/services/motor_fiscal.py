@@ -24,6 +24,17 @@ from app.models import Cliente, Comprobante, ParametroFiscal, Alerta
 
 logger = logging.getLogger(__name__)
 
+# Orden de categorías monotributo (A < B < C < ... < K)
+ORDEN_CATEGORIAS = {
+    "A": 1, "B": 2, "C": 3, "D": 4, "E": 5,
+    "F": 6, "G": 7, "H": 8, "I": 9, "J": 10, "K": 11, "N": 12,
+}
+
+
+def _orden_categoria(cat: str) -> int:
+    """Obtener orden numérico de categoría. Fallback: ord del primer char."""
+    return ORDEN_CATEGORIAS.get(cat.upper(), ord(cat[0]) if cat else 0)
+
 
 # ============================================
 # DATACLASSES
@@ -324,12 +335,17 @@ class MotorRiesgoFiscal:
             date_type(anio, 7, 1),
             date_type(anio + 1, 1, 1),
         ]
-        dias_min = min((v - fecha_corte).days for v in ventanas 
-                        if (v - fecha_corte).days >= 0)
+        # Safe: filter to future ventanas, fallback to nearest if all past
+        futuras = [(v, (v - fecha_corte).days) for v in ventanas
+                   if (v - fecha_corte).days >= 0]
+        if futuras:
+            ventana_fecha, dias_min = min(futuras, key=lambda x: x[1])
+        else:
+            # All ventanas are in the past — use nearest one anyway
+            diffs = [(v, abs((v - fecha_corte).days)) for v in ventanas]
+            ventana_fecha, dias_min = min(diffs, key=lambda x: x[1])
+
         if dias_min <= 30:
-            ventana_fecha = min((v for v in ventanas 
-                                 if (v - fecha_corte).days >= 0),
-                                key=lambda v: (v - fecha_corte).days)
             ventana = "enero" if ventana_fecha.month == 1 else "julio"
             urgencia = True
             triggers.append(f"VENTANA_{ventana.upper()}_EN_{dias_min}_DIAS")
@@ -358,7 +374,7 @@ class MotorRiesgoFiscal:
         if not riesgo and categoria_actual == categoria_calculada:
             return None
 
-        if categoria_calculada > categoria_actual:
+        if _orden_categoria(categoria_calculada) > _orden_categoria(categoria_actual):
             return f"Recomendar recategorización de {categoria_actual} a {categoria_calculada}"
 
         if riesgo:

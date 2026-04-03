@@ -90,7 +90,7 @@ async def generar_bank_kit(
             Comprobante.estado_interno == "INCORPORADO"
         ).order_by(Comprobante.fecha_emision)
     )
-    comprobantes = resultado.scalars().all()
+    comprobantes = comprobantes_result.scalars().all()
 
     # Separar emitidos y recibidos
     comprobantes_emitidos = [c for c in comprobantes if c.tipo_comprobante in ["1", "2", "3", "A", "B", "C"]]

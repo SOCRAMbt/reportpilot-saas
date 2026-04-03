@@ -94,7 +94,7 @@ async def obtener_estadisticas(
             Comprobante.tenant_id == tenant_id,
             Comprobante.fecha_emision >= inicio_mes,
             Comprobante.estado_interno == "INCORPORADO",
-            Comprobante.tipo_comprobante.in_(["1", "2", "A", "B"])  # Facturas
+            Comprobante.tipo_comprobante.in_(["1", "2", "3", "A", "B", "C"])  # Facturas
         )
     )
     facturacion_mes = result_facturacion.scalar() or 0

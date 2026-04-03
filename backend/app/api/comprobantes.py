@@ -2,6 +2,8 @@
 Endpoints de gestión de comprobantes
 """
 
+import logging
+
 from fastapi import APIRouter, Depends, HTTPException, status, Query, UploadFile, File
 from fastapi.responses import JSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -12,8 +14,11 @@ from datetime import date
 from app.db import get_db
 from app.models import Comprobante, Cliente, Tenant
 from app.api.auth import get_current_user_id, get_current_tenant_id
-from app.services.delta_processing import procesar_delta_comprobante, EstadosComprobante
+from app.services.delta_processing import procesar_delta_comprobante, EstadosComprobante, calcular_hash_delta
 from app.services.ocr import procesar_comprobante_ocr
+
+logger = logging.getLogger(__name__)
+
 from app.schemas.comprobantes import (
     ComprobanteCreate,
     ComprobanteResponse,
@@ -158,6 +163,12 @@ async def crear_comprobante(
         )
 
     # Crear comprobante
+    hash_delta = calcular_hash_delta(
+        str(data.cuit_emisor or (cliente.cuit if cliente else "")),
+        data.punto_venta,
+        data.numero
+    )
+
     comprobante = Comprobante(
         tenant_id=tenant_id,
         cliente_id=data.cliente_id,
@@ -176,6 +187,7 @@ async def crear_comprobante(
         estado_arca=EstadosComprobante.PRESENTE_VALIDO,
         origen="manual",
         observaciones=observaciones,
+        hash_delta=hash_delta,
     )
 
     session.add(comprobante)
