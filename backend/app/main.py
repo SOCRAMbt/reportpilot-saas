@@ -6,7 +6,6 @@ import logging
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-import structlog
 
 from app.core.config import settings
 from app.api import auth, comprobantes, veps, clientes, dashboard, bank_kit, alertas, configuracion, arco
@@ -16,21 +15,11 @@ from app.db import async_engine
 # CONFIGURACIÓN DE LOGGING
 # ============================================
 
-# Configurar structlog para logging estructurado
-structlog.configure(
-    processors=[
-        structlog.contextvars.merge_contextvars,
-        structlog.processors.add_log_level,
-        structlog.processors.StackInfoRenderer(),
-        structlog.processors.TimeStamper(fmt="iso"),
-        structlog.processors.JSONRenderer()
-    ],
-    wrapper_class=structlog.make_filtering_bound_logger(settings.log_level),
-    context_class=dict,
-    logger_factory=structlog.PrintLoggerFactory()
+logging.basicConfig(
+    level=getattr(logging, settings.log_level.upper(), logging.INFO),
+    format="%(asctime)s | %(levelname)-8s | %(name)s | %(message)s",
 )
-
-logger = structlog.get_logger()
+logger = logging.getLogger("accountantos")
 
 
 # ============================================
@@ -39,21 +28,16 @@ logger = structlog.get_logger()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """
-    Manejar startup y shutdown de la aplicación
-    """
-    # Startup
-    logger.info("Iniciando AccountantOS", version="9.7.0")
+    """Manejar startup y shutdown de la aplicación"""
+    logger.info("Iniciando AccountantOS v9.7")
 
-    # Verificar conexión a BD
     try:
         async with async_engine.begin() as conn:
-            await conn.execute("SELECT 1")
+            await conn.execute(logging.getLogger("sqlalchemy").info("SELECT 1"))
         logger.info("Conexión a BD verificada")
     except Exception as e:
-        logger.error("Error conectando a BD", error=str(e))
+        logger.error("Error conectando a BD: %s", e)
 
-    # Verificar Redis (solo si está habilitado)
     if settings.redis_enabled:
         try:
             import redis.asyncio as redis
@@ -62,13 +46,12 @@ async def lifespan(app: FastAPI):
             logger.info("Conexión a Redis verificada")
             await redis_client.close()
         except Exception as e:
-            logger.error("Error conectando a Redis", error=str(e))
+            logger.error("Error conectando a Redis: %s", e)
     else:
-        logger.info("Redis deshabilitado - usando modo desarrollo")
+        logger.info("Redis deshabilitado - modo desarrollo")
 
     yield
 
-    # Shutdown
     logger.info("Cerrando AccountantOS")
     await async_engine.dispose()
 
@@ -83,20 +66,20 @@ app = FastAPI(
     version="9.7.0",
     docs_url="/docs",
     redoc_url="/redoc",
-    lifespan=lifespan
+    lifespan=lifespan,
 )
 
 # ============================================
 # MIDDLEWARE
 # ============================================
 
-# CORS - Permitir frontend
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         settings.frontend_url,
         "http://localhost:3000",
-        "http://localhost:8000"
+        "http://localhost:8000",
+        "http://localhost:8001",
     ],
     allow_credentials=True,
     allow_methods=["*"],
@@ -110,23 +93,13 @@ app.add_middleware(
 
 @app.get("/")
 async def root():
-    """Endpoint raíz - health check básico"""
-    return {
-        "nombre": "AccountantOS API",
-        "version": "9.7.0",
-        "estado": "ok"
-    }
+    return {"nombre": "AccountantOS API", "version": "9.7.0", "estado": "ok"}
 
 
 @app.get("/health")
 async def health_check():
-    """Health check completo"""
-    health = {
-        "api": "ok",
-        "version": "9.7.0"
-    }
+    health = {"api": "ok", "version": "9.7.0"}
 
-    # Verificar BD
     try:
         from sqlalchemy import select
         from app.db import AsyncSessionLocal
@@ -134,9 +107,8 @@ async def health_check():
             await session.execute(select(1))
         health["database"] = "ok"
     except Exception as e:
-        health["database"] = f"error: {str(e)}"
+        health["database"] = f"error: {e}"
 
-    # Verificar Redis (solo si está habilitado)
     if settings.redis_enabled:
         try:
             import redis.asyncio as redis
@@ -145,14 +117,17 @@ async def health_check():
             await redis_client.close()
             health["redis"] = "ok"
         except Exception as e:
-            health["redis"] = f"error: {str(e)}"
+            health["redis"] = f"error: {e}"
     else:
         health["redis"] = "disabled"
 
     return health
 
 
-# Registrar routers
+# ============================================
+# ROUTERS
+# ============================================
+
 app.include_router(auth.router, prefix="/api/v1")
 app.include_router(comprobantes.router, prefix="/api/v1")
 app.include_router(veps.router, prefix="/api/v1")
@@ -174,5 +149,5 @@ if __name__ == "__main__":
         "app.main:app",
         host="0.0.0.0",
         port=8000,
-        reload=settings.environment == "development"
+        reload=settings.environment == "development",
     )

@@ -28,7 +28,11 @@
       "Bash(git push *)",
       "Bash(git rm *)",
       "Bash(wc *)",
-      "Bash(type *)"
+      "Bash(type *)",
+      "Bash(docker compose up *)",
+      "Bash(docker compose *)",
+      "Bash(docker logs *)",
+      "Bash(do *)"
     ]
   },
   "$version": 3

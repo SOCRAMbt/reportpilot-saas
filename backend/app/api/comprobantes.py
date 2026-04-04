@@ -273,6 +273,51 @@ async def procesar_ocr(
     return ComprobanteResponse.model_validate(comprobante)
 
 
+@router.put("/{comprobante_id}/incorporar")
+async def incorporar_comprobante(
+    comprobante_id: int,
+    tenant_id: int = Depends(get_current_tenant_id),
+    session: AsyncSession = Depends(get_db),
+):
+    """Marcar comprobante como incorporado a la posición IVA."""
+    resultado = await session.execute(
+        select(Comprobante).where(
+            Comprobante.id == comprobante_id,
+            Comprobante.tenant_id == tenant_id,
+        )
+    )
+    comprobante = resultado.scalar_one_or_none()
+    if not comprobante:
+        raise HTTPException(status_code=404, detail="Comprobante no encontrado")
+
+    comprobante.estado_interno = "INCORPORADO"
+    await session.commit()
+    return {"mensaje": "Comprobante incorporado correctamente"}
+
+
+@router.put("/{comprobante_id}/descartar")
+async def descartar_comprobante(
+    comprobante_id: int,
+    tenant_id: int = Depends(get_current_tenant_id),
+    session: AsyncSession = Depends(get_db),
+):
+    """Descartar comprobante (marcar como anulado/descartado)."""
+    resultado = await session.execute(
+        select(Comprobante).where(
+            Comprobante.id == comprobante_id,
+            Comprobante.tenant_id == tenant_id,
+        )
+    )
+    comprobante = resultado.scalar_one_or_none()
+    if not comprobante:
+        raise HTTPException(status_code=404, detail="Comprobante no encontrado")
+
+    comprobante.estado_interno = "ANULADO"
+    comprobante.es_duplicado = True
+    await session.commit()
+    return {"mensaje": "Comprobante descartado"}
+
+
 @router.put("/{comprobante_id}", response_model=ComprobanteResponse)
 async def actualizar_comprobante(
     comprobante_id: int,

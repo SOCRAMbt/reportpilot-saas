@@ -53,14 +53,14 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
             sidebarOpen ? 'translate-x-0' : '-translate-x-full'
           }`}
         >
-          <SidebarContent pathname={pathname} />
+          <SidebarContent pathname={pathname} onLogout={handleLogout} />
         </div>
       </div>
 
       {/* Sidebar desktop */}
       <div className="hidden lg:fixed lg:inset-y-0 lg:flex lg:w-64 lg:flex-col">
         <div className="flex min-h-0 flex-1 flex-col bg-white border-r border-slate-200">
-          <SidebarContent pathname={pathname} />
+          <SidebarContent pathname={pathname} onLogout={handleLogout} />
         </div>
       </div>
 
@@ -101,7 +101,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
   )
 }
 
-function SidebarContent({ pathname }: { pathname: string }) {
+function SidebarContent({ pathname, onLogout }: { pathname: string; onLogout: () => void }) {
   return (
     <>
       {/* Logo */}
@@ -144,7 +144,7 @@ function SidebarContent({ pathname }: { pathname: string }) {
       {/* Footer del sidebar */}
       <div className="border-t border-slate-200 p-4">
         <button
-          onClick={handleLogout}
+          onClick={onLogout}
           className="flex w-full items-center px-3 py-2 text-sm text-slate-600 hover:bg-slate-50 rounded-lg transition-colors"
         >
           <LogOut className="h-5 w-5 mr-3" />

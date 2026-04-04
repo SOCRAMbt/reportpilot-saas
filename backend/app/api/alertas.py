@@ -68,9 +68,27 @@ async def mark_leida(
     session: AsyncSession = Depends(get_db),
     tenant_id: int = Depends(get_current_tenant_id),
 ):
-    """
-    Marcar una alerta como leida.
-    """
+    """Marcar una alerta como leida."""
+    return await _mark_leida_impl(alerta_id, session, tenant_id)
+
+
+@router.put("/{alerta_id}/marcar-leida")
+async def mark_leida_put(
+    alerta_id: int,
+    session: AsyncSession = Depends(get_db),
+    tenant_id: int = Depends(get_current_tenant_id),
+):
+    """Marcar una alerta como leida (PUT alias)."""
+    return await _mark_leida_impl(alerta_id, session, tenant_id)
+
+
+async def _mark_leida_impl(
+    alerta_id: int,
+    session: AsyncSession,
+    tenant_id: int,
+):
+    from datetime import datetime, timezone
+
     result = await session.execute(
         select(Alerta).where(Alerta.id == alerta_id, Alerta.tenant_id == tenant_id)
     )
@@ -82,13 +100,9 @@ async def mark_leida(
             detail="Alerta no encontrada",
         )
 
-    from datetime import datetime, timezone
-
     alerta.leida = True
     alerta.leida_en = datetime.now(timezone.utc)
     await session.commit()
-
-    logger.info("alerta marcada como leida", alerta_id=alerta_id, tenant_id=tenant_id)
 
     return {"mensaje": "Alerta marcada como leída"}
 

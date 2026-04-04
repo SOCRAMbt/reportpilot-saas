@@ -80,7 +80,7 @@ services:
       - ${ARCA_CERT_PATH:-./certs}:/app/certs:ro
       - ${GOOGLE_CLOUD_KEY_PATH:-./gcp}:/app/gcp:ro
     ports:
-      - "8000:8000"
+      - "8001:8000"
     depends_on:
       postgres:
         condition: service_healthy
@@ -169,8 +169,8 @@ services:
       dockerfile: Dockerfile
     container_name: accountantos-frontend
     environment:
-      NEXT_PUBLIC_API_URL: http://localhost:8000
-      NEXT_PUBLIC_WS_URL: ws://localhost:8000/ws
+      NEXT_PUBLIC_API_URL: http://localhost:8001
+      NEXT_PUBLIC_WS_URL: ws://localhost:8001/ws
     volumes:
       - ../frontend:/app
       - /app/node_modules
