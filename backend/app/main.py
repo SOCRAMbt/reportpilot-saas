@@ -11,7 +11,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from app.core.config import settings
 from app.core.security import verify_access_token
 from app.core.context import current_tenant_id
-from app.api import auth, comprobantes, veps, clientes, dashboard, bank_kit, alertas, configuracion, arco
+from app.api import auth, comprobantes, veps, clientes, dashboard, bank_kit, alertas, configuracion, arco, calendario, ingesta
 from app.db import async_engine
 
 # ============================================
@@ -170,6 +170,8 @@ app.include_router(bank_kit.router, prefix="/api/v1")
 app.include_router(alertas.router, prefix="/api/v1")
 app.include_router(configuracion.router, prefix="/api/v1")
 app.include_router(arco.router, prefix="/api/v1")
+app.include_router(calendario.router, prefix="/api/v1")
+app.include_router(ingesta.router, prefix="/api/v1")
 
 
 # ============================================

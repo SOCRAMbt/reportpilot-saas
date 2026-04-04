@@ -322,10 +322,22 @@ class MotorRiesgoFiscal:
             riesgo = True
 
         # 2. Trigger por precio unitario máximo (facturas tipo C)
+        # Verificar si ALGUNA factura individual supera el tope (no promedio)
         precio_unitario_max = Decimal(str(datos_categoria.get("precio_unitario_max", 0)))
-        if ingresos["precio_unitario_promedio"] > precio_unitario_max:
-            triggers.append("PRECIO_UNITARIO_MAXIMO_SUPERADO")
-            riesgo = True
+        if precio_unitario_max > 0:
+            fecha_inicio_anio = date(fecha_corte.year, 1, 1)
+            result = await self.session.execute(
+                select(func.count(Comprobante.id)).where(
+                    Comprobante.cliente_id == cliente_id,
+                    Comprobante.tipo_comprobante.in_(["3", "C"]),
+                    Comprobante.total > float(precio_unitario_max),
+                    Comprobante.fecha_emision >= fecha_inicio_anio,
+                    Comprobante.estado_interno == "INCORPORADO",
+                )
+            )
+            if (result.scalar() or 0) > 0:
+                triggers.append("PRECIO_UNITARIO_MAXIMO_SUPERADO")
+                riesgo = True
 
         # 3. Ventana de exclusión (enero/julio) - ±30 días
         from datetime import date as date_type

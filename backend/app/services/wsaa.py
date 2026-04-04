@@ -409,35 +409,38 @@ async def get_token_para_servicio(
     """
     redis_client = redis.from_url(settings.redis_url)
 
-    # Clave de caché
-    cache_key = f"wsaa:token:{tenant_id}:{servicio}"
+    try:
+        # Clave de caché
+        cache_key = f"wsaa:token:{tenant_id}:{servicio}"
 
-    # Intentar obtener de caché
-    if not force_refresh:
-        cached = redis_client.hgetall(cache_key)
-        if cached:
-            logger.debug(f"Token en caché para {servicio}")
-            return cached[b"token"].decode(), cached[b"signature"].decode()
+        # Intentar obtener de caché
+        if not force_refresh:
+            cached = redis_client.hgetall(cache_key)
+            if cached:
+                logger.debug(f"Token en caché para {servicio}")
+                return cached[b"token"].decode(), cached[b"signature"].decode()
 
-    # Solicitar nuevo token
-    token, signature = await obtener_ta(servicio)
+        # Solicitar nuevo token
+        token, signature = await obtener_ta(servicio)
 
-    # Calcular TTL (2 horas menos margen de seguridad)
-    ttl = TOKEN_TTL_PRODUCCION if settings.environment == "production" else TOKEN_TTL_TESTING
+        # Calcular TTL (2 horas menos margen de seguridad)
+        ttl = TOKEN_TTL_PRODUCCION if settings.environment == "production" else TOKEN_TTL_TESTING
 
-    # Guardar en caché (sin persistencia - Redis está configurado sin AOF/RDB)
-    redis_client.hset(cache_key, mapping={
-        "token": token,
-        "signature": signature,
-        "expires_in": ttl
-    })
-    redis_client.expire(cache_key, ttl)
+        # Guardar en caché (sin persistencia - Redis está configurado sin AOF/RDB)
+        redis_client.hset(cache_key, mapping={
+            "token": token,
+            "signature": signature,
+            "expires_in": ttl
+        })
+        redis_client.expire(cache_key, ttl)
 
-    # Guardar en BD también (para auditoría)
-    await guardar_token_en_bd(session, tenant_id, servicio, token, signature)
+        # Guardar en BD también (para auditoría)
+        await guardar_token_en_bd(session, tenant_id, servicio, token, signature)
 
-    logger.info(f"Token renovado para {servicio} (TTL: {ttl}s)")
-    return token, signature
+        logger.info(f"Token renovado para {servicio} (TTL: {ttl}s)")
+        return token, signature
+    finally:
+        redis_client.close()
 
 
 async def guardar_token_en_bd(
@@ -495,10 +498,12 @@ async def invalidar_token(tenant_id: int, servicio: str):
         servicio: Nombre del servicio
     """
     redis_client = redis.from_url(settings.redis_url)
-    cache_key = f"wsaa:token:{tenant_id}:{servicio}"
-    redis_client.delete(cache_key)
-
-    logger.info(f"Token invalidado para {servicio}")
+    try:
+        cache_key = f"wsaa:token:{tenant_id}:{servicio}"
+        redis_client.delete(cache_key)
+        logger.info(f"Token invalidado para {servicio}")
+    finally:
+        redis_client.close()
 
 
 # ============================================

@@ -15,11 +15,13 @@ import {
   LogOut,
   Archive,
   Calculator,
+  Camera,
 } from 'lucide-react'
 
 const navigation = [
   { name: 'Dashboard', href: '/', icon: LayoutDashboard },
   { name: 'Comprobantes', href: '/comprobantes', icon: FileText },
+  { name: 'Cargar Factura', href: '/ingesta', icon: Camera },
   { name: 'VEPs', href: '/veps', icon: DollarSign },
   { name: 'Clientes', href: '/clientes', icon: Users },
   { name: 'Alertas', href: '/alertas', icon: Bell, badge: true },

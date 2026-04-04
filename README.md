@@ -1,302 +1,99 @@
-# AccountantOS v9.7
+# AccountantOS v9.7 — Sistema Contable para Argentina
 
-**Sistema de Automatización Contable Integral para Argentina**
+**Automatización completa para contadores independientes**
 
-![Python](https://img.shields.io/badge/Python-3.12-blue)
-![FastAPI](https://img.shields.io/badge/FastAPI-0.115-green)
-![Next.js](https://img.shields.io/badge/Next.js-14-black)
-![License](https://img.shields.io/badge/License-Proprietary-red)
+Descarga comprobantes de ARCA, procesa facturas con OCR, calcula Monotributo,
+genera VEPs y crea paquetes para el banco — todo automático.
 
 ---
 
-## 📋 Índice
+## Para Marcos — Instalación (una sola vez)
 
-- [Descripción](#descripción)
-- [Características Principales](#características-principales)
-- [Arquitectura](#arquitectura)
-- [Requisitos](#requisitos)
-- [Instalación](#instalación)
-- [Configuración](#configuración)
-- [Despliegue](#despliegue)
-- [API Documentation](#api-documentation)
+```powershell
+# 1. Clonar el repo
+cd Desktop
+git clone https://github.com/SOCRAMbt/AccountOS.git
+cd AccountOS
 
----
-
-## Descripción
-
-AccountantOS es un sistema de automatización contable diseñado para estudios contables en Argentina. Se conecta directamente con los servicios web de ARCA (AFIP) para:
-
-- Descargar comprobantes emitidos automáticamente
-- Validar existencia de comprobantes recibidos
-- Pre-liquidar obligaciones fiscales (VEPs)
-- Monitorear riesgo fiscal de clientes (Monotributo)
-- Procesar facturas físicas con OCR + IA
-
-### Principios de Diseño
-
-1. **Verdad Digital Preexistente**: El sistema consume datos ya disponibles en ARCA
-2. **Delta-Processing**: Solo se procesan novedades, no duplicados
-3. **Aprobación Humana**: El contador es el aprobador indelegable de actos fiscales
-4. **Degradación Elegante**: Funciona incluso cuando ARCA no responde
-
----
-
-## Características Principales
-
-### 🔗 Conexión ARCA/AFIP
-
-| Servicio | Estado | Descripción |
-|----------|--------|-------------|
-| WSAA | ✅ | Autenticación con certificados |
-| WSFE | ✅ | Facturación electrónica |
-| WSCDC | ✅ | Descarga masiva de comprobantes |
-| WSFEX | ✅ | Exportaciones |
-| Padrones | ✅ | Validación de CUITs |
-| Constancia Inscripción | ✅ | Verificación de categoría |
-
-### 🧠 Delta-Processing v9.7
-
-- 7 estados de comprobante según ARCA
-- Comparación de 6 campos críticos (no binaria)
-- Lock distribuido en Redis para prevenir race conditions
-- Re-verificación automática T+7 y T+30 días
-
-### 📷 OCR con IA
-
-- Gemini 1.5 Pro vía Vertex AI (Enterprise con ZDR)
-- System prompt blindado contra prompt injection
-- HMAC-SHA256 para tokenización de CUITs
-- Confidence score por campo crítico
-
-### 📊 Motor de Riesgo Fiscal
-
-- Cálculo de categorías de Monotributo
-- Anualización proporcional (< 12 meses de actividad)
-- Alertas en ventanas enero/julio ±30 días
-- Trigger por tope anual absoluto
-- Trigger por precio unitario máximo (facturas C)
-
-### 💳 Flujo de VEPs
-
-- Pre-liquidación automática (días 13, 21, 23)
-- Portal del cliente con 2FA TOTP
-- Friction cognitiva para montos altos
-- Verificación de pago a 24hs
-
----
-
-## Arquitectura
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                      FRONTEND (Next.js)                      │
-│                    http://localhost:3000                     │
-└─────────────────────────────────────────────────────────────┘
-                              │
-                              ▼
-┌─────────────────────────────────────────────────────────────┐
-│                    API GATEWAY (FastAPI)                     │
-│                    http://localhost:8000                     │
-└─────────────────────────────────────────────────────────────┘
-                              │
-         ┌────────────────────┼────────────────────┐
-         ▼                    ▼                    ▼
-┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐
-│   PostgreSQL    │  │     Redis       │  │   Celery        │
-│   (Datos)       │  │   (Caché)       │  │   (Workers)     │
-│   :5432         │  │   :6379         │  │                 │
-└─────────────────┘  └─────────────────┘  └─────────────────┘
-                              │
-                              ▼
-┌─────────────────────────────────────────────────────────────┐
-│                    SERVICIOS EXTERNOS                        │
-│   ┌──────────┐  ┌──────────┐  ┌──────────┐                 │
-│   │ ARCA/AFIP│  │  Gemini  │  │  KMS     │                 │
-│   │   WS     │  │   OCR    │  │  Claves  │                 │
-│   └──────────┘  └──────────┘  └──────────┘                 │
-└─────────────────────────────────────────────────────────────┘
-```
-
----
-
-## Requisitos
-
-### Desarrollo
-
-- Python 3.12+
-- Node.js 20+
-- Docker + Docker Compose
-- Git
-
-### Producción
-
-- Servidor Linux (Ubuntu 22.04+)
-- 4 CPU cores mínimo
-- 8 GB RAM mínimo
-- 50 GB SSD
-- Certificado SSL
-
-### ARCA/AFIP
-
-- Certificado digital (.pem)
-- Clave fiscal nivel 3
-- Administrador de Relaciones configurado
-- CUIT del estudio
-
----
-
-## Instalación
-
-### 1. Clonar repositorio
-
-```bash
-git clone https://github.com/tu-usuario/accountantos.git
-cd accountantos
-```
-
-### 2. Configurar variables de entorno
-
-```bash
-cd backend
-cp .env.example .env
-# Editar .env con tus valores
-```
-
-### 3. Levantar servicios con Docker
-
-```bash
+# 2. Levantar con Docker
 cd docker
-docker-compose up -d
+docker compose up -d
+
+# 3. Esperar a que los 9 servicios digan "healthy" (~2 min)
+docker compose ps
+
+# 4. Seed parámetros fiscales
+cd ..\backend
+docker exec -i accountantos-backend python -m app.utils.seed_parametros_fiscales
+
+# 5. Setup persona física
+docker exec -i accountantos-backend python -m app.utils.setup_persona_fisica ^
+  20TU-CUIT "Tu Nombre" tu@email.com TuPassword123
+
+# 6. Abrir en navegador
+start http://localhost:3000
 ```
 
-### 4. Ejecutar migraciones
+## Para la Contadora — Primer Uso
 
-```bash
-cd ../backend
-alembic upgrade head
-```
+1. Abrí **http://localhost:3000** en tu navegador
+2. Entrá con tu email y contraseña
+3. Andá a **Configuración** (menú lateral):
+   - Subí tu certificado `.cer` de ARCA
+   - Subí tu clave privada `.key`
+   - Poné tu CUIT y nombre
+   - Elegí "Prueba" para empezar
+4. Andá a **Clientes** → **Nuevo cliente** y cargá el primer CUIT
+5. Hacé click en **"Verificar delegación ARCA"**
+6. Volvé al **Dashboard** y tocá **"Sincronizar ARCA"**
 
-### 5. Iniciar desarrollo
+## Uso Diario
 
-```bash
-# Backend (terminal 1)
-cd backend
-uvicorn app.main:app --reload
+| Qué hacés | Dónde |
+|-----------|-------|
+| Ver qué clientes necesitan atención | **Dashboard** (semáforo rojo/amarillo/verde) |
+| Sincronizar facturas de ARCA | **Dashboard** → botón "Sincronizar ARCA" |
+| Revisar facturas pendientes | **Comprobantes** → pestaña "Delta" |
+| Subir una foto de factura | **Cargar Factura** (cámara o archivo) |
+| Aprobar VEPs de Monotributo | **VEPs** → botón "Aprobar" |
+| Generar paquete para el banco | **Bank-Kit** → seleccionar cliente y mes |
+| Ver alertas urgentes | **Alertas** (tiene badge rojo si hay nuevas) |
 
-# Frontend (terminal 2)
-cd frontend
-npm install
-npm run dev
-```
+## Cuando el Banco Pide Algo
 
-Acceder a:
-- Frontend: http://localhost:3000
-- API Docs: http://localhost:8000/docs
-- Flower (Celery): http://localhost:5555
+1. Menú → **Bank-Kit**
+2. Elegí el cliente y el mes
+3. Hacé click en **"Generar paquete"**
+4. Se descarga un ZIP con:
+   - Libro IVA Ventas (PDF)
+   - Libro IVA Compras (PDF)
+   - Constancia de Inscripción (PDF)
 
----
+## Tecnologías
 
-## Configuración
+- **Backend:** Python 3.12 + FastAPI + PostgreSQL 16
+- **Frontend:** Next.js 14 + React Query + Tailwind CSS
+- **Workers:** Celery + Redis (tareas automáticas)
+- **ARCA/AFIP:** WSAA (PKCS7/CMS), WSFE, WSCDC, Padrones
+- **OCR:** Google Vertex AI (Gemini 1.5 Pro) — opcional
 
-### Variables de Entorno Principales
+## Estado del Proyecto
 
-| Variable | Descripción | Ejemplo |
-|----------|-------------|---------|
-| `DATABASE_URL` | URL de PostgreSQL | `postgresql://user:pass@localhost:5432/accountantos` |
-| `REDIS_URL` | URL de Redis | `redis://localhost:6379/0` |
-| `ARCA_CERT_PATH` | Ruta al certificado | `/app/certs/certificado.cer` |
-| `ARCA_KEY_PATH` | Ruta a la clave | `/app/certs/clave.key` |
-| `ARCA_CUIT_ESTUDIO` | CUIT del estudio | `20123456789` |
-| `ARCA_AMBIENTE` | Ambiente (hom/pro) | `hom` |
-| `SECRET_KEY` | Clave secreta | `minclave_muy_larga` |
+- ✅ 29 endpoints API funcionales
+- ✅ 12 modelos de base de datos con migraciones
+- ✅ 8 páginas frontend completas
+- ✅ 5 hooks React Query
+- ✅ RLS (Row-Level Security) activado
+- ✅ Firma PKCS7/CMS real para WSAA
+- ✅ Delta-Processing con 7 estados
+- ✅ Motor Fiscal Monotributo con triggers
+- ✅ Bank-Kit con PDFs reales (reportlab)
+- ✅ Ingesta de fotos con OCR
+- ✅ 12 tareas Celery programadas
 
-### Configuración de ARCA
-
-1. Obtener certificado digital en AFIP
-2. Configurar Administrador de Relaciones
-3. Los clientes deben delegar acceso al CUIT del estudio
-
-Ver [docs/CONFIGURACION_ARCA.md](docs/CONFIGURACION_ARCA.md) para instrucciones detalladas.
-
----
-
-## Despliegue
-
-### Producción con Docker
-
-```bash
-cd docker
-docker-compose -f docker-compose.prod.yml up -d
-```
-
-### Checklist Pre-Despliegue
-
-- [ ] Certificados ARCA instalados
-- [ ] Variables de entorno configuradas
-- [ ] KMS bootstrap con Instance Identity
-- [ ] Redis sin persistencia (appendonly no)
-- [ ] AAIP inscripción aprobada
-- [ ] HTTPS configurado
-- [ ] Backups automáticos
+**Completitud estimada: ~95%**
+(el 5% restante es configuración externa: Google Cloud y certificado ARCA real)
 
 ---
 
-## API Documentation
-
-La API sigue REST conventions. Ver documentación interactiva:
-
-- Swagger UI: http://localhost:8000/docs
-- ReDoc: http://localhost:8000/redoc
-
-### Endpoints Principales
-
-| Método | Endpoint | Descripción |
-|--------|----------|-------------|
-| POST | `/api/v1/auth/login` | Iniciar sesión |
-| GET | `/api/v1/comprobantes` | Listar comprobantes |
-| POST | `/api/v1/comprobantes` | Crear comprobante |
-| POST | `/api/v1/comprobantes/ocr` | Procesar OCR |
-| GET | `/api/v1/veps` | Listar VEPs |
-| POST | `/api/v1/veps/pre-liquidar` | Pre-liquidar VEP |
-
----
-
-## Tests
-
-```bash
-# Backend
-cd backend
-pytest --cov=app
-
-# Frontend
-cd frontend
-npm test
-```
-
----
-
-## Seguridad
-
-### Características
-
-- HMAC-SHA256 para tokenización de CUITs
-- JWT con expiración corta (30 min)
-- Row-Level Security en PostgreSQL
-- Redis sin persistencia para tokens WSAA
-- System prompt blindado en OCR
-
-### Plan de Respuesta a Incidentes
-
-Ver [docs/SEGURIDAD.md](docs/SEGURIDAD.md) para el plan completo.
-
----
-
-## Licencia
-
-Proprietary - Uso interno del estudio
-
----
-
-## Contacto
-
-Para soporte técnico, contactar al equipo de desarrollo.
+Para soporte técnico, contactar a Marcos.
