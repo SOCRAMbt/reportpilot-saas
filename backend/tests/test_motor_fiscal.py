@@ -1,5 +1,6 @@
 """
 Tests del Motor de Riesgo Fiscal
+Tests puros que no requieren PostgreSQL/Redis.
 """
 
 import pytest
@@ -16,7 +17,7 @@ def test_determinar_categoria_basico():
         "C": {"ingresos_brutos_anual": 5400000, "alquileres_anual": 378000, "precio_unitario_max": 55000},
     }
 
-    motor = MotorRiesgoFiscal(None)  # Session no necesaria para este test
+    motor = MotorRiesgoFiscal(session=None)  # Session no necesaria para este test
 
     # Categoría A
     categoria = motor._determinar_categoria(
@@ -66,11 +67,3 @@ def test_trigger_precio_unitario_maximo():
 
     # Debería activar trigger de exclusión
     assert True  # Lógica verificada
-
-
-@pytest.mark.anyio
-async def test_calculo_con_parametros_vigentes():
-    """Test de cálculo con parámetros versionados"""
-    # Este test requeriría una BD real con parámetros cargados
-    # Se implementaría con pytest-asyncio y una BD de test
-    pass

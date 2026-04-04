@@ -1,22 +1,41 @@
 """
 Configuración de tests - Fixtures compartidos
+Usa SQLite in-memory para no necesitar PostgreSQL/Redis en CI.
 """
 
+import os
+import sys
 import pytest
-from typing import AsyncGenerator, Generator
+from typing import AsyncGenerator
+
+# ============================================
+# SET TEST ENV VARS BEFORE ANY APP IMPORTS
+# ============================================
+# These MUST be set before app.core.config.settings is loaded (singleton)
+os.environ.setdefault("SECRET_KEY", "test_secret_key_for_ci_minimum_32_chars")
+os.environ.setdefault("JWT_SECRET_KEY", "test_jwt_secret_key_for_ci_minimum_32_chars")
+os.environ.setdefault("HMAC_SALT_MASTER", "test_hmac_salt_for_ci_minimum_32_chars")
+os.environ.setdefault("ARCA_CERT_PATH", "/tmp/test_cert.cer")
+os.environ.setdefault("ARCA_KEY_PATH", "/tmp/test_key.key")
+os.environ.setdefault("ARCA_CA_PATH", "/tmp/test_ca.crt")
+os.environ.setdefault("ARCA_CUIT_ESTUDIO", "20123456789")
+os.environ.setdefault("DATABASE_URL_OVERRIDE", "sqlite+aiosqlite:///:memory:")
+os.environ.setdefault("REDIS_ENABLED", "false")
+os.environ.setdefault("ENVIRONMENT", "testing")
+
+# Now safe to import app modules
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
 from sqlalchemy.pool import StaticPool
 
 from app.main import app
 from app.db import Base, get_db
-from app.core.config import settings
+
 
 # ============================================
 # CONFIGURACIÓN DE TEST
 # ============================================
 
-# Base de datos de test en memoria (SQLite)
 TEST_DATABASE_URL = "sqlite+aiosqlite:///:memory:"
 
 
@@ -28,7 +47,7 @@ def anyio_backend():
 
 @pytest.fixture(scope="function")
 async def db_engine():
-    """Crear engine de test"""
+    """Crear engine de test en SQLite in-memory"""
     engine = create_async_engine(
         TEST_DATABASE_URL,
         connect_args={"check_same_thread": False},
@@ -62,7 +81,6 @@ async def db_session(db_engine) -> AsyncGenerator[AsyncSession, None]:
 async def client(db_session: AsyncSession) -> AsyncGenerator[AsyncClient, None]:
     """Crear cliente de test para FastAPI"""
 
-    # Override de la dependencia get_db
     async def override_get_db():
         yield db_session
 
