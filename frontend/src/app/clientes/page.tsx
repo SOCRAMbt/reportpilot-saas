@@ -3,8 +3,9 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { DashboardLayout } from '@/components/DashboardLayout'
-import { Users, Search, Plus, ChevronRight, AlertTriangle, CheckCircle, AlertCircle } from 'lucide-react'
+import { Users, Search, Plus, ChevronRight, AlertTriangle, CheckCircle, AlertCircle, ShieldCheck } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
+import { useVerificarDelegacion } from '@/hooks/useClientes'
 import api from '@/lib/api'
 
 interface Cliente {
@@ -50,6 +51,8 @@ function RiesgoBadge({ nivel }: { nivel: 'verde' | 'amarillo' | 'rojo' }) {
 
 export default function ClientesPage() {
   const [busqueda, setBusqueda] = useState('')
+  const verificarDelegacion = useVerificarDelegacion()
+  const [delegacionResult, setDelegacionResult] = useState<{ id: number; activa: boolean; mensaje: string } | null>(null)
 
   const { data: clientesData, isLoading } = useQuery({
     queryKey: ['clientes', busqueda],
@@ -134,7 +137,34 @@ export default function ClientesPage() {
                     )}
                   </div>
 
-                  <div className="mt-4 pt-4 border-t border-slate-100">
+                  <div className="mt-4 pt-4 border-t border-slate-100 space-y-2">
+                    {/* Delegación ARCA */}
+                    <button
+                      onClick={async () => {
+                        const resultado = await verificarDelegacion.mutateAsync(cliente.id)
+                        setDelegacionResult({
+                          id: cliente.id,
+                          activa: resultado.delegacion_activa,
+                          mensaje: resultado.mensaje,
+                        })
+                      }}
+                      disabled={verificarDelegacion.isPending}
+                      className="btn-ghost btn-sm w-full flex items-center justify-center gap-1"
+                    >
+                      <ShieldCheck className="h-4 w-4" />
+                      {verificarDelegacion.isPending ? 'Verificando...' : 'Verificar delegación ARCA'}
+                    </button>
+
+                    {delegacionResult?.id === cliente.id && (
+                      <div className={`text-xs p-2 rounded ${
+                        delegacionResult.activa
+                          ? 'bg-emerald-50 text-emerald-700'
+                          : 'bg-red-50 text-red-700'
+                      }`}>
+                        {delegacionResult.mensaje}
+                      </div>
+                    )}
+
                     <Link
                       href={`/clientes/${cliente.id}`}
                       className="btn-secondary btn-sm w-full flex items-center justify-center"

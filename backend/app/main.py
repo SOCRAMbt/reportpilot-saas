@@ -32,8 +32,9 @@ async def lifespan(app: FastAPI):
     logger.info("Iniciando AccountantOS v9.7")
 
     try:
+        from sqlalchemy import text
         async with async_engine.begin() as conn:
-            await conn.execute(logging.getLogger("sqlalchemy").info("SELECT 1"))
+            await conn.execute(text("SELECT 1"))
         logger.info("Conexión a BD verificada")
     except Exception as e:
         logger.error("Error conectando a BD: %s", e)

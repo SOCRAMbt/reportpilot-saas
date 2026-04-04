@@ -1,0 +1,12 @@
+## Qwen Added Memories
+- AccountantOS v9.7 session (Abril 2026) - Fixes completados:
+- 30+ bugs fixeados: celery crontab syntax, precio_unitario bug, motor_fiscal typo, firmar_tra PKCS7, hash_delta, auth bypass en 7 endpoints, seed_parametros typo monotribito→monotributo, fuente_normativa column, OCR hex→base64, bank_kit variable wrong, categoria comparison string→numeric, ventana exclusion empty sequence, logger import, email-validator, structlog→logging estándar
+- 7 runtime bugs en última tanda: AlertTriangle import, handleLogout prop scope, structlog DEBUG crash, endpoints faltantes (incorporar/descartar/marcar-leida), puerto 8000→8001
+- Nuevos modelos: RelacionARCA, LogAuditoria, SolicitudARCO, CalendarioVencimiento
+- Nuevos APIs: alertas.py, configuracion.py, arco.py, relacion-arca endpoints
+- Alembic migrations: 001_initial_schema + 002_rls_policies
+- Frontend: 8 páginas completas, logout funcional, semáforo dinámico
+- 12 Celery tasks (incluye WhatsApp notification)
+- Backend puerto: 8001, Frontend: 3000, PostgreSQL: 5432, Redis: 6379
+- Repo: github.com/SOCRAMbt/reportpilot-saas
+- Informe técnico definitivo: docs/INFORME_TECNICO_DEFINITIVO_v97.md (1719 líneas)

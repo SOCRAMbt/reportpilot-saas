@@ -1,16 +1,37 @@
 'use client'
 
-import Link from 'next/link'
 import { DashboardLayout } from '@/components/DashboardLayout'
-import { useDashboardStats } from '@/hooks/useDashboard'
+import { useSemaforoClientes } from '@/hooks/useClientes'
 import { useAlertas } from '@/hooks/useAlertas'
-import { useComprobantes } from '@/hooks/useComprobantes'
-import { AlertCircle, CheckCircle, Clock, Archive, RefreshCw, DollarSign } from 'lucide-react'
+import { AlertCircle, CheckCircle, AlertTriangle, RefreshCw, FileText } from 'lucide-react'
+import api from '@/lib/api'
+import { useQueryClient } from '@tanstack/react-query'
+import { useState } from 'react'
 
 export default function HomePage() {
-  const { data: stats, isLoading: statsLoading } = useDashboardStats()
+  const { data: semaforo, isLoading: semaforoLoading } = useSemaforoClientes()
   const { data: alertas } = useAlertas()
-  const { data: comprobantesData } = useComprobantes({ limite: 5 })
+  const qc = useQueryClient()
+  const [syncing, setSyncing] = useState(false)
+
+  const handleSincronizar = async () => {
+    setSyncing(true)
+    try {
+      await api.post('/comprobantes/sincronizar-todo')
+      qc.invalidateQueries({ queryKey: ['dashboard', 'semaforo'] })
+    } catch (e) {
+      console.error('Error sincronizando:', e)
+    } finally {
+      setSyncing(false)
+    }
+  }
+
+  const totales = semaforo?.totales || { rojo: 0, amarillo: 0, verde: 0 }
+  const lista = (semaforo?.semaforo || [])
+    .sort((a: { color: string }, b: { color: string }) => {
+      const orden: Record<string, number> = { rojo: 0, amarillo: 1, verde: 2 }
+      return (orden[a.color] ?? 3) - (orden[b.color] ?? 3)
+    })
 
   return (
     <DashboardLayout>
@@ -19,233 +40,110 @@ export default function HomePage() {
         <div className="page-header">
           <div>
             <h1 className="page-title">Dashboard</h1>
-            <p className="page-subtitle">Resumen de tu estudio contable</p>
+            <p className="page-subtitle">Estado de tus clientes de un vistazo</p>
           </div>
-          <Link href="/comprobantes/nuevo" className="btn-primary">
-            + Nuevo Comprobante
-          </Link>
+          <button
+            onClick={handleSincronizar}
+            disabled={syncing}
+            className="btn-secondary"
+          >
+            <RefreshCw className={`h-4 w-4 mr-2 ${syncing ? 'animate-spin' : ''}`} />
+            {syncing ? 'Sincronizando...' : 'Sincronizar ARCA'}
+          </button>
         </div>
 
-        {/* Stats */}
-        {statsLoading ? (
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            {[...Array(4)].map((_, i) => (
-              <div key={i} className="card skeleton h-28" />
-            ))}
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <StatCard
-              title="Comprobantes hoy"
-              value={stats?.comprobantes_hoy || 0}
-              change="+12%"
-              trend="up"
-            />
-            <StatCard
-              title="Pendientes revisión"
-              value={stats?.pendientes_revision || 0}
-              change={stats && stats.pendientes_revision > 0 ? 'Atención' : 'Normal'}
-              trend={stats && stats.pendientes_revision > 0 ? 'warning' : 'normal'}
-            />
-            <StatCard
-              title="VEPs del mes"
-              value={stats?.veps_pendientes || 0}
-              change="+5"
-              trend="up"
-            />
-            <StatCard
-              title="Alertas activas"
-              value={stats?.alertas_activas || 0}
-              change={stats && stats.alertas_activas > 5 ? 'Atención' : 'Normal'}
-              trend={stats && stats.alertas_activas > 5 ? 'warning' : 'normal'}
-            />
-          </div>
-        )}
-
-        {/* Acciones rápidas */}
-        <div className="card">
-          <h2 className="text-lg font-semibold mb-4">Acciones rápidas</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <QuickActionCard
-              icon={RefreshCw}
-              title="Sincronizar ARCA"
-              description="Forzar sincronización con ARCA ahora"
-              href="/comprobantes"
-              color="blue"
-            />
-            <QuickActionCard
-              icon={DollarSign}
-              title="Generar VEPs"
-              description="Pre-liquidar VEPs del mes"
-              href="/veps"
-              color="green"
-            />
-            <QuickActionCard
-              icon={Archive}
-              title="Bank-Kit"
-              description="Generar paquete para el banco"
-              href="/bank-kit"
-              color="purple"
-            />
-          </div>
+        {/* Contadores */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <StatCard title="Necesitan atención" value={totales.rojo} icon={AlertTriangle} color="red" />
+          <StatCard title="Pendientes" value={totales.amarillo} icon={AlertCircle} color="yellow" />
+          <StatCard title="Al día" value={totales.verde} icon={CheckCircle} color="green" />
         </div>
 
         {/* Alertas críticas */}
         {alertas && alertas.length > 0 && (
-          <div className="card">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-lg font-semibold flex items-center gap-2">
-                <AlertCircle className="h-5 w-5 text-amber-500" />
-                Alertas Recientes
-              </h2>
-              <Link href="/alertas" className="text-blue-600 hover:text-blue-700 text-sm font-medium">
-                Ver todas →
-              </Link>
-            </div>
-            <div className="space-y-3">
-              {alertas.slice(0, 3).map((alerta) => (
-                <div
-                  key={alerta.id}
-                  className={`alert ${
-                    alerta.severidad === 'critica' ? 'alert-red' :
-                    alerta.severidad === 'alta' ? 'alert-yellow' : 'alert-blue'
-                  }`}
-                >
-                  <div className="flex-1">
-                    <p className="font-semibold">{alerta.titulo}</p>
-                    <p className="text-sm mt-1">{alerta.mensaje}</p>
-                  </div>
-                  <span className="text-xs text-slate-500">
-                    {new Date(alerta.creado_en).toLocaleDateString()}
-                  </span>
-                </div>
-              ))}
+          <div className="alert alert-yellow">
+            <AlertCircle className="h-5 w-5 flex-shrink-0" />
+            <div>
+              <p className="font-semibold">{alertas[0].titulo}</p>
+              <p className="text-sm">{alertas[0].mensaje}</p>
             </div>
           </div>
         )}
 
-        {/* Últimos comprobantes */}
-        <div className="card">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-lg font-semibold">Últimos Comprobantes</h2>
-            <Link href="/comprobantes" className="text-blue-600 hover:text-blue-700 text-sm font-medium">
-              Ver todos →
-            </Link>
-          </div>
-          {comprobantesData && comprobantesData.comprobantes.length > 0 ? (
-            <div className="table-container">
+        {/* Semáforo de clientes */}
+        {semaforoLoading ? (
+          <div className="card skeleton h-64" />
+        ) : lista.length > 0 ? (
+          <div className="card">
+            <h2 className="text-lg font-semibold mb-4">Clientes</h2>
+            <div className="overflow-x-auto">
               <table className="table">
                 <thead>
                   <tr>
-                    <th>Fecha</th>
-                    <th>Tipo</th>
-                    <th>Número</th>
-                    <th>Total</th>
                     <th>Estado</th>
+                    <th>Cliente</th>
+                    <th>CUIT</th>
+                    <th>Categoría</th>
+                    <th>Detalle</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {comprobantesData.comprobantes.map((cbte) => (
-                    <tr key={cbte.id}>
-                      <td>{new Date(cbte.fecha_emision).toLocaleDateString()}</td>
+                  {lista.map((c: any) => (
+                    <tr key={c.id} className="hover:bg-slate-50">
+                      <td><SemaforoDot color={c.color} /></td>
+                      <td className="font-medium">{c.razon_social}</td>
+                      <td className="font-mono text-xs">{c.cuit}</td>
                       <td>
-                        <span className="badge badge-gray">
-                          {cbte.tipo_comprobante === '1' ? 'FA' : 
-                           cbte.tipo_comprobante === '2' ? 'FB' : 
-                           cbte.tipo_comprobante === '3' ? 'FC' : cbte.tipo_comprobante}
-                        </span>
+                        {c.categoria_monotributo && (
+                          <span className="badge badge-blue">{c.categoria_monotributo}</span>
+                        )}
                       </td>
-                      <td className="font-mono text-xs">
-                        {String(cbte.punto_venta).padStart(4, '0')}-{String(cbte.numero).padStart(8, '0')}
-                      </td>
-                      <td className="font-semibold">${Number(cbte.total).toLocaleString('es-AR')}</td>
-                      <td>
-                        <EstadoBadge estado={cbte.estado_interno} />
-                      </td>
+                      <td className="text-sm text-slate-600">{c.issues.join(', ')}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
-          ) : (
+          </div>
+        ) : (
+          <div className="card">
             <div className="empty-state">
-              <CheckCircle className="h-12 w-12 text-slate-300 mb-3" />
-              <p className="text-slate-500">No hay comprobantes recientes</p>
+              <FileText className="h-12 w-12 text-slate-300 mb-3" />
+              <p className="text-slate-500">No hay clientes cargados todavía</p>
             </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
     </DashboardLayout>
   )
 }
 
-function StatCard({
-  title,
-  value,
-  change,
-  trend,
-}: {
-  title: string
-  value: string | number
-  change: string
-  trend: 'up' | 'down' | 'warning' | 'normal'
+function StatCard({ title, value, icon: Icon, color }: {
+  title: string; value: number; icon: React.ElementType; color: string
 }) {
-  const trendColors = {
-    up: 'text-emerald-600',
-    down: 'text-red-600',
-    warning: 'text-amber-600',
-    normal: 'text-slate-600',
+  const colors: Record<string, string> = {
+    red: 'bg-red-50 text-red-600 border-red-200',
+    yellow: 'bg-yellow-50 text-yellow-600 border-yellow-200',
+    green: 'bg-emerald-50 text-emerald-600 border-emerald-200',
   }
-
   return (
-    <div className="stat-card">
-      <p className="stat-label">{title}</p>
-      <p className="stat-value">{value}</p>
-      <p className={`stat-change-${trend === 'up' || trend === 'normal' ? 'up' : 'down'}`}>
-        {change}
-      </p>
+    <div className={`card border ${colors[color] || colors.green}`}>
+      <div className="flex items-center gap-3">
+        <Icon className="h-6 w-6" />
+        <div>
+          <p className="text-sm font-medium">{title}</p>
+          <p className="text-2xl font-bold">{value}</p>
+        </div>
+      </div>
     </div>
   )
 }
 
-function QuickActionCard({
-  icon: Icon,
-  title,
-  description,
-  href,
-  color,
-}: {
-  icon: any
-  title: string
-  description: string
-  href: string
-  color: 'blue' | 'green' | 'purple'
-}) {
-  const colorClasses = {
-    blue: 'bg-blue-50 text-blue-600 hover:bg-blue-100',
-    green: 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100',
-    purple: 'bg-purple-50 text-purple-600 hover:bg-purple-100',
+function SemaforoDot({ color }: { color: string }) {
+  const colors: Record<string, string> = {
+    rojo: 'bg-red-500',
+    amarillo: 'bg-yellow-500',
+    verde: 'bg-emerald-500',
   }
-
-  return (
-    <Link href={href} className={`card card-hover ${colorClasses[color]}`}>
-      <Icon className="h-8 w-8 mb-3" />
-      <h3 className="font-semibold text-slate-900">{title}</h3>
-      <p className="text-sm text-slate-600 mt-1">{description}</p>
-    </Link>
-  )
-}
-
-function EstadoBadge({ estado }: { estado: string }) {
-  const estados: Record<string, { clase: string; label: string }> = {
-    INCORPORADO: { clase: 'badge-green', label: 'OK' },
-    REVISION_HUMANA: { clase: 'badge-yellow', label: 'Revisar' },
-    PENDIENTE_VERIFICACION: { clase: 'badge-blue', label: 'Pendiente' },
-    ANULADO: { clase: 'badge-red', label: 'Anulado' },
-    AUSENTE: { clase: 'badge-red', label: 'Ausente' },
-  }
-
-  const config = estados[estado] || { clase: 'badge-gray', label: estado }
-
-  return <span className={`badge ${config.clase}`}>{config.label}</span>
+  return <span className={`inline-block h-3 w-3 rounded-full ${colors[color] || 'bg-slate-300'}`} />
 }

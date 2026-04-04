@@ -414,6 +414,94 @@ async def obtener_relacion_arca(
     }
 
 
+@router.post("/{cliente_id}/verificar-delegacion")
+async def verificar_delegacion_arca(
+    cliente_id: int,
+    db: AsyncSession = Depends(get_db),
+    tenant_id: int = Depends(get_current_tenant_id),
+):
+    """
+    Verifica que el cliente tiene la delegación activa en ARCA.
+    """
+    import datetime
+    cliente = await db.get(Cliente, cliente_id)
+    if not cliente or cliente.tenant_id != tenant_id:
+        raise HTTPException(404, "Cliente no encontrado")
+
+    try:
+        from app.services.arca import arca_service
+        datos = await arca_service.padron_a4_consultar(db, tenant_id, cliente.cuit)
+
+        if datos.get("razon_social"):
+            cliente.razon_social = datos["razon_social"]
+        if datos.get("tipo_responsable"):
+            cliente.tipo_responsable = datos["tipo_responsable"]
+
+        config = cliente.configuracion or {}
+        config["delegacion_verificada"] = True
+        config["delegacion_fecha"] = datetime.date.today().isoformat()
+        cliente.configuracion = config
+        await db.commit()
+
+        return {
+            "delegacion_activa": True,
+            "datos_arca": datos,
+            "mensaje": "La delegación está activa. El sistema puede acceder a los datos de este cliente."
+        }
+    except Exception as e:
+        return {
+            "delegacion_activa": False,
+            "mensaje": f"No se pudo verificar. El cliente debe ir a arca.gob.ar y delegar al CUIT del estudio.",
+            "error_tecnico": str(e)
+        }
+
+
+@router.get("/delegaciones/estado")
+async def estado_delegaciones(
+    db: AsyncSession = Depends(get_db),
+    tenant_id: int = Depends(get_current_tenant_id),
+):
+    """
+    Vista de semáforo: estado de delegación de TODOS los clientes.
+    """
+    import datetime
+    hoy = datetime.date.today()
+    hace_30_dias = hoy - datetime.timedelta(days=30)
+
+    resultado = await db.execute(
+        select(Cliente).where(Cliente.tenant_id == tenant_id, Cliente.activo == True)
+    )
+    clientes = resultado.scalars().all()
+
+    semaforo = []
+    for c in clientes:
+        config = c.configuracion or {}
+        delegacion_fecha_str = config.get("delegacion_fecha")
+
+        if config.get("delegacion_verificada") and delegacion_fecha_str:
+            fecha_ver = datetime.date.fromisoformat(delegacion_fecha_str)
+            estado = "verde" if fecha_ver >= hace_30_dias else "amarillo"
+        else:
+            estado = "amarillo"
+
+        semaforo.append({
+            "id": c.id,
+            "cuit": c.cuit,
+            "razon_social": c.razon_social,
+            "estado_delegacion": estado,
+            "ultima_verificacion": delegacion_fecha_str,
+        })
+
+    return {
+        "clientes": semaforo,
+        "resumen": {
+            "verde": sum(1 for x in semaforo if x["estado_delegacion"] == "verde"),
+            "amarillo": sum(1 for x in semaforo if x["estado_delegacion"] == "amarillo"),
+            "rojo": sum(1 for x in semaforo if x["estado_delegacion"] == "rojo"),
+        }
+    }
+
+
 # ============================================
 # UTILIDADES
 # ============================================

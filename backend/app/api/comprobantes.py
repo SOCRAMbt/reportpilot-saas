@@ -384,3 +384,19 @@ async def eliminar_comprobante(
     await session.commit()
 
     return None
+
+
+@router.post("/sincronizar-todo")
+async def sincronizar_todo(
+    tenant_id: int = Depends(get_current_tenant_id),
+):
+    """
+    Dispara descarga manual de comprobantes para todos los clientes activos.
+    """
+    from app.workers.tasks_arca import descargar_comprobantes_nocturno
+    task = descargar_comprobantes_nocturno.delay()
+    return {
+        "mensaje": "Sincronización iniciada",
+        "task_id": task.id,
+        "nota": "El proceso tarda varios minutos. Recargá en 5 minutos."
+    }

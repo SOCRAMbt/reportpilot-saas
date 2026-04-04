@@ -154,3 +154,81 @@ async def obtener_actividad_reciente(
         "comprobantes_por_dia": comprobantes_por_dia,
         "alertas_por_dia": alertas_por_dia
     }
+
+
+@router.get("/semaforo-clientes")
+async def semaforo_clientes(
+    db: AsyncSession = Depends(get_db),
+    tenant_id: int = Depends(get_current_tenant_id),
+):
+    """
+    Vista semáforo para persona física: qué necesita atención HOY cada cliente.
+    """
+    import datetime
+    hoy = datetime.date.today()
+    primer_dia_mes = hoy.replace(day=1)
+
+    resultado = await db.execute(
+        select(Cliente).where(Cliente.tenant_id == tenant_id, Cliente.activo == True)
+        .order_by(Cliente.razon_social)
+    )
+    clientes = resultado.scalars().all()
+
+    semaforo = []
+    for c in clientes:
+        issues = []
+        color = "verde"
+
+        cbtes_mes = await db.execute(
+            select(func.count()).select_from(Comprobante).where(
+                Comprobante.cliente_id == c.id,
+                Comprobante.tenant_id == tenant_id,
+                Comprobante.fecha_emision >= primer_dia_mes,
+            )
+        )
+        if cbtes_mes.scalar() == 0:
+            issues.append("Sin comprobantes este mes")
+            color = "rojo"
+
+        pendientes = await db.execute(
+            select(func.count()).select_from(Comprobante).where(
+                Comprobante.cliente_id == c.id,
+                Comprobante.tenant_id == tenant_id,
+                Comprobante.estado_interno == "REVISION_HUMANA",
+            )
+        )
+        if pendientes.scalar() > 0:
+            issues.append(f"{pendientes.scalar()} comprobantes sin revisar")
+            if color != "rojo":
+                color = "amarillo"
+
+        veps_pendientes = await db.execute(
+            select(func.count()).select_from(VEP).where(
+                VEP.cliente_id == c.id,
+                VEP.tenant_id == tenant_id,
+                VEP.estado == "PRE_LIQUIDADO",
+            )
+        )
+        if veps_pendientes.scalar() > 0:
+            issues.append(f"{veps_pendientes.scalar()} VEP(s) pendientes")
+            if color != "rojo":
+                color = "amarillo"
+
+        semaforo.append({
+            "id": c.id,
+            "cuit": c.cuit,
+            "razon_social": c.razon_social,
+            "categoria_monotributo": c.categoria_monotributo,
+            "color": color,
+            "issues": issues,
+            "acciones": issues if issues else ["Al día"],
+        })
+
+    return {
+        "semaforo": semaforo,
+        "totales": {
+            "rojo": sum(1 for x in semaforo if x["color"] == "rojo"),
+            "amarillo": sum(1 for x in semaforo if x["color"] == "amarillo"),
+            "verde": sum(1 for x in semaforo if x["color"] == "verde"),
+        }
+    }

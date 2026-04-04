@@ -186,33 +186,19 @@ class OCRPipeline:
         self.client = None
 
     def _get_gemini_client(self):
-        """Obtener cliente de Vertex AI (lazy loading)"""
+        """Obtener modelo de Gemini vía Vertex AI (SDK correcto: google-cloud-aiplatform)"""
         if self.client is None:
-            try:
-                from google.cloud import aiplatform
-                from google.cloud.aiplatform import v1 as aiplatform_v1
+            import vertexai
+            from vertexai.generative_models import GenerativeModel
 
-                # Inicializar con credentials del service account
-                if settings.google_cloud_key_path:
-                    from google.oauth2 import service_account
-                    credentials = service_account.Credentials.from_service_account_file(
-                        settings.google_cloud_key_path
-                    )
-                else:
-                    credentials = None
-
-                aiplatform.init(
-                    project=settings.google_cloud_project,
-                    location=settings.gemini_location,
-                    credentials=credentials
-                )
-
-                self.client = aiplatform
-
-            except ImportError:
-                logger.error("google-cloud-aiplatform no instalado")
-                raise
-
+            vertexai.init(
+                project=settings.google_cloud_project,
+                location=settings.gemini_location,
+            )
+            self.client = GenerativeModel(
+                model_name=settings.gemini_model,
+                system_instruction=SYSTEM_PROMPT,
+            )
         return self.client
 
     async def procesar_imagen(
@@ -297,49 +283,19 @@ class OCRPipeline:
         return result
 
     async def _llamar_gemini(self, imagen_bytes: bytes) -> str:
-        """
-        Llamar a Gemini 1.5 Pro vía Vertex AI
+        """Llamar a Gemini 1.5 Pro vía Vertex AI (SDK correcto)"""
+        from vertexai.generative_models import Part
 
-        Args:
-            imagen_bytes: Imagen del comprobante
+        model = self._get_gemini_client()
+        imagen_part = Part.from_data(imagen_bytes, mime_type="image/jpeg")
 
-        Returns:
-            str: Respuesta en texto
-        """
-        client = self._get_gemini_client()
-
-        # Usar el modelo Gemini 1.5 Pro
-        model = client.generative_models.GenerativeModel(
-            model_name=settings.gemini_model
-        )
-
-        # Preparar prompt con system prompt blindado
-        prompt = {
-            "role": "user",
-            "parts": [
-                {
-                    "text": SYSTEM_PROMPT
-                },
-                {
-                    "inline_data": {
-                        "mime_type": "image/jpeg",
-                        "data": base64.b64encode(imagen_bytes).decode("utf-8")
-                    }
-                },
-                {
-                    "text": "Extrae los datos del comprobante. Responde SOLO con JSON válido."
-                }
-            ]
-        }
-
-        # Generar respuesta
         response = model.generate_content(
-            contents=[prompt],
+            [imagen_part, "Extrae los datos del comprobante. Responde SOLO con JSON válido."],
             generation_config={
-                "temperature": 0.1,  # Baja temperatura para consistencia
+                "temperature": 0.1,
                 "top_p": 0.8,
-                "top_k": 40,
-            }
+                "response_mime_type": "application/json",
+            },
         )
 
         return response.text
