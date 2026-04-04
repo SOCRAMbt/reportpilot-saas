@@ -23,7 +23,20 @@ interface VEP {
 export default function VEPsPage() {
   const [filtroPeriodo, setFiltroPeriodo] = useState('')
   const [filtroEstado, setFiltroEstado] = useState('')
+  const [preliquidando, setPreliquidando] = useState(false)
   const queryClient = useQueryClient()
+
+  const handlePreLiquidar = async () => {
+    setPreliquidando(true)
+    try {
+      await api.post('/veps/pre-liquidar')
+      queryClient.invalidateQueries({ queryKey: ['veps'] })
+    } catch (e) {
+      console.error('Error pre-liquidando:', e)
+    } finally {
+      setPreliquidando(false)
+    }
+  }
 
   const { data: vepsData, isLoading } = useQuery({
     queryKey: ['veps', filtroPeriodo, filtroEstado],
@@ -65,8 +78,12 @@ export default function VEPsPage() {
             <h1 className="page-title">VEPs</h1>
             <p className="page-subtitle">Gestión de obligaciones fiscales</p>
           </div>
-          <button className="btn-primary">
-            + Pre-liquidar VEPs
+          <button
+            onClick={handlePreLiquidar}
+            disabled={preliquidando}
+            className="btn-primary"
+          >
+            {preliquidando ? 'Pre-liquidando...' : '+ Pre-liquidar VEPs'}
           </button>
         </div>
 

@@ -2,7 +2,7 @@
 Endpoints de VEPs - Obligaciones Fiscales
 """
 
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status, Body
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from datetime import date, datetime
@@ -129,11 +129,11 @@ async def aprobar_vep(
 @router.put("/{vep_id}/registrar-pago")
 async def registrar_pago(
     vep_id: int,
-    data: VEPUpdate,
+    data: VEPUpdate = Body(default=None),
     tenant_id: int = Depends(get_current_tenant_id),
     session: AsyncSession = Depends(get_db)
 ):
-    """Registrar pago de VEP"""
+    """Registrar pago de VEP. El body es opcional."""
     resultado = await session.execute(
         select(VEP).where(VEP.id == vep_id, VEP.tenant_id == tenant_id)
     )
@@ -143,8 +143,8 @@ async def registrar_pago(
         raise HTTPException(404, "VEP no encontrado")
 
     vep.estado = "PAGADO"
-    vep.fecha_pago = data.fecha_pago or date.today()
-    vep.comprobante_pago = data.comprobante_pago
+    vep.fecha_pago = data.fecha_pago if data and data.fecha_pago else date.today()
+    vep.comprobante_pago = data.comprobante_pago if data else None
 
     await session.commit()
     await session.refresh(vep)

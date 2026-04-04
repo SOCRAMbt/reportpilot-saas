@@ -1,9 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import Link from 'next/link'
 import { DashboardLayout } from '@/components/DashboardLayout'
-import { Bell, AlertTriangle, AlertCircle, Info, CheckCircle, Filter } from 'lucide-react'
+import { Bell, AlertTriangle, AlertCircle, Info, CheckCircle } from 'lucide-react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import api from '@/lib/api'
 

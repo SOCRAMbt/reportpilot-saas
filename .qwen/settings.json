@@ -33,7 +33,8 @@
       "Bash(docker compose *)",
       "Bash(docker logs *)",
       "Bash(do *)",
-      "Bash(ruff *)"
+      "Bash(ruff *)",
+      "Bash(del *)"
     ]
   },
   "$version": 3
