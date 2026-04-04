@@ -60,7 +60,8 @@ export default function ClientesPage() {
       const params = new URLSearchParams()
       if (busqueda) params.set('busqueda', busqueda)
       const { data } = await api.get(`/clientes?${params}`)
-      return data as Cliente[]
+      // Backend retorna {clientes: [...], total, pagina, ...}
+      return (Array.isArray(data) ? data : (data?.clientes || [])) as Cliente[]
     },
   })
 

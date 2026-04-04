@@ -50,12 +50,7 @@ export function useCrearComprobante() {
 
   return useMutation({
     mutationFn: async (data: Partial<Comprobante>) => {
-      const formData = new FormData()
-      Object.entries(data).forEach(([key, value]) => {
-        if (value) formData.append(key, String(value))
-      })
-
-      const { data: response } = await api.post('/comprobantes', formData)
+      const { data: response } = await api.post('/comprobantes', data)
       return response
     },
     onSuccess: () => {

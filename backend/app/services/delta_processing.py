@@ -520,13 +520,19 @@ async def _consultar_estado_en_arca(
         dict | None: Estado del comprobante o None si no encontrado
     """
     try:
-        # WSCDC permite descargar comprobantes por rango de fecha
-        # Para consulta individual, usamos el método de descarga con filtro
+        # WSCDC requiere período como (año, mes), no fechas individuales
+        if comprobante.fecha_emision is None:
+            logger.warning(f"Comprobante {comprobante.id} sin fecha_emision")
+            return None
+
+        anio = comprobante.fecha_emision.year
+        mes = comprobante.fecha_emision.month
+        periodo = (anio, mes)
+
         resultado = await arca_service.wscdc_descargar_comprobantes(
             session, tenant_id,
             comprobante.cuit_emisor,
-            comprobante.fecha_emision,
-            comprobante.fecha_emision
+            periodo
         )
 
         # Buscar el comprobante específico en el resultado

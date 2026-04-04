@@ -93,8 +93,17 @@ async def generar_bank_kit(
     comprobantes = comprobantes_result.scalars().all()
 
     # Separar emitidos y recibidos
-    comprobantes_emitidos = [c for c in comprobantes if c.tipo_comprobante in ["1", "2", "3", "A", "B", "C"]]
-    comprobantes_recibidos = [c for c in comprobantes if c.cuit_emisor != cliente.cuit]
+    # NOTA: cuit_emisor está tokenizado (HMAC), no se puede comparar con CUIT raw.
+    # Los comprobantes emitidos por el cliente tienen tipo_comprobante factura (1,2,3,A,B,C).
+    # Los recibidos son los que NO coinciden con esos tipos.
+    comprobantes_emitidos = [
+        c for c in comprobantes
+        if c.tipo_comprobante in ("1", "2", "3", "A", "B", "C")
+    ]
+    comprobantes_recibidos = [
+        c for c in comprobantes
+        if c.tipo_comprobante not in ("1", "2", "3", "A", "B", "C")
+    ]
 
     # Generar PDFs
     buffer_zip = io.BytesIO()

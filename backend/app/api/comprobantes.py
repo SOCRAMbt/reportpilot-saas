@@ -34,6 +34,8 @@ async def listar_comprobantes(
     tenant_id: int = Depends(get_current_tenant_id),
     cliente_id: Optional[int] = Query(None),
     estado: Optional[str] = Query(None),
+    estado_interno: Optional[str] = Query(None),
+    estado_arca: Optional[str] = Query(None),
     fecha_desde: Optional[date] = Query(None),
     fecha_hasta: Optional[date] = Query(None),
     pagina: int = Query(1, ge=1),
@@ -52,6 +54,10 @@ async def listar_comprobantes(
 
     if estado:
         query = query.where(Comprobante.estado_interno == estado)
+    if estado_interno:
+        query = query.where(Comprobante.estado_interno == estado_interno)
+    if estado_arca:
+        query = query.where(Comprobante.estado_arca == estado_arca)
 
     if fecha_desde:
         query = query.where(Comprobante.fecha_emision >= fecha_desde)

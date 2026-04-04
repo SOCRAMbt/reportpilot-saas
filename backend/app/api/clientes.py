@@ -480,8 +480,15 @@ async def estado_delegaciones(
 
         if config.get("delegacion_verificada") and delegacion_fecha_str:
             fecha_ver = datetime.date.fromisoformat(delegacion_fecha_str)
-            estado = "verde" if fecha_ver >= hace_30_dias else "amarillo"
+            if fecha_ver >= hace_30_dias:
+                estado = "verde"
+            else:
+                estado = "amarillo"
+        elif delegacion_fecha_str:
+            # Fue verificada pero falló la última vez
+            estado = "rojo"
         else:
+            # Nunca verificada
             estado = "amarillo"
 
         semaforo.append({

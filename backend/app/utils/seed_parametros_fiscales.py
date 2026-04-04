@@ -95,7 +95,7 @@ async def seed():
                     nombre=nombre,
                     valor=datos["valor"],
                     descripcion=datos.get("descripcion", ""),
-                    fuente_normativa=datos.get("fuente", ""),
+                    fuente_normativa=datos.get("fuente_normativa", ""),
                     fecha_vigencia_desde=datos["vigencia_desde"],
                     fecha_vigencia_hasta=datos.get("vigencia_hasta"),
                 )

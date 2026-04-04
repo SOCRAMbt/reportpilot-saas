@@ -20,21 +20,56 @@ interface VEP {
   }
 }
 
+interface ClienteMin {
+  id: number
+  cuit: string
+  razon_social: string
+  categoria_monotributo?: string
+}
+
 export default function VEPsPage() {
   const [filtroPeriodo, setFiltroPeriodo] = useState('')
   const [filtroEstado, setFiltroEstado] = useState('')
   const [preliquidando, setPreliquidando] = useState(false)
+  const [modalAbierto, setModalAbierto] = useState(false)
+  const [clienteSeleccionado, setClienteSeleccionado] = useState('')
+  const [periodoSeleccionado, setPeriodoSeleccionado] = useState('')
+  const [clientes, setClientes] = useState<ClienteMin[]>([])
   const queryClient = useQueryClient()
 
   const handlePreLiquidar = async () => {
+    if (!clienteSeleccionado || !periodoSeleccionado) return
     setPreliquidando(true)
     try {
-      await api.post('/veps/pre-liquidar')
+      await api.post('/veps/pre-liquidar', {
+        cliente_id: parseInt(clienteSeleccionado),
+        tipo_vep: 'MONOTRIBUTO',
+        periodo: periodoSeleccionado,
+      })
       queryClient.invalidateQueries({ queryKey: ['veps'] })
+      setModalAbierto(false)
+      setClienteSeleccionado('')
+      setPeriodoSeleccionado('')
     } catch (e) {
       console.error('Error pre-liquidando:', e)
     } finally {
       setPreliquidando(false)
+    }
+  }
+
+  const abrirModal = async () => {
+    try {
+      const { data } = await api.get('/clientes?activo=true')
+      const lista = data.clientes || data || []
+      setClientes(lista)
+      const hoy = new Date()
+      const mes = hoy.getMonth() + 2
+      const anio = mes > 12 ? hoy.getFullYear() + 1 : hoy.getFullYear()
+      const m = mes > 12 ? 1 : mes
+      setPeriodoSeleccionado(`${anio}-${String(m).padStart(2, '0')}`)
+      setModalAbierto(true)
+    } catch (e) {
+      console.error('Error cargando clientes:', e)
     }
   }
 
@@ -67,7 +102,7 @@ export default function VEPsPage() {
     },
   })
 
-  const veps = vepsData?.veps || []
+  const veps = Array.isArray(vepsData) ? vepsData : (vepsData?.veps || [])
 
   return (
     <DashboardLayout>
@@ -79,11 +114,11 @@ export default function VEPsPage() {
             <p className="page-subtitle">Gestión de obligaciones fiscales</p>
           </div>
           <button
-            onClick={handlePreLiquidar}
+            onClick={abrirModal}
             disabled={preliquidando}
             className="btn-primary"
           >
-            {preliquidando ? 'Pre-liquidando...' : '+ Pre-liquidar VEPs'}
+            + Pre-liquidar VEPs
           </button>
         </div>
 
@@ -206,6 +241,51 @@ export default function VEPsPage() {
             </div>
           )}
         </div>
+
+        {/* Modal Pre-liquidación */}
+        {modalAbierto && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+            <div className="card max-w-md w-full mx-4">
+              <h3 className="text-lg font-semibold mb-4">Pre-liquidar VEP</h3>
+              <div className="space-y-4">
+                <div>
+                  <label className="input-label">Cliente</label>
+                  <select
+                    value={clienteSeleccionado}
+                    onChange={(e) => setClienteSeleccionado(e.target.value)}
+                    className="input-field"
+                  >
+                    <option value="">Seleccionar cliente...</option>
+                    {clientes.map((c) => (
+                      <option key={c.id} value={c.id}>{c.razon_social}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="input-label">Período</label>
+                  <input
+                    type="month"
+                    value={periodoSeleccionado}
+                    onChange={(e) => setPeriodoSeleccionado(e.target.value)}
+                    className="input-field"
+                  />
+                </div>
+                <div className="flex gap-2">
+                  <button onClick={() => setModalAbierto(false)} className="btn-secondary flex-1">
+                    Cancelar
+                  </button>
+                  <button
+                    onClick={handlePreLiquidar}
+                    disabled={preliquidando || !clienteSeleccionado || !periodoSeleccionado}
+                    className="btn-primary flex-1"
+                  >
+                    {preliquidando ? 'Procesando...' : 'Pre-liquidar'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </DashboardLayout>
   )
