@@ -92,10 +92,28 @@ async def listar_clientes(
     resultado = await db.execute(query)
     clientes = resultado.scalars().all()
 
-    # Contar total
+    # Contar total (mismos filtros que la query principal)
     count_query = select(func.count()).select_from(Cliente).where(Cliente.tenant_id == tenant_id)
     if activo:
         count_query = count_query.where(Cliente.activo == True)
+    if categoria:
+        count_query = count_query.where(Cliente.categoria_monotributo == categoria)
+    if busqueda:
+        if busqueda.isdigit():
+            count_query = count_query.where(
+                or_(
+                    Cliente.cuit.like(f"%{busqueda}%"),
+                    Cliente.razon_social.ilike(f"%{busqueda}%"),
+                    Cliente.nombre_fantasia.ilike(f"%{busqueda}%"),
+                )
+            )
+        else:
+            count_query = count_query.where(
+                or_(
+                    Cliente.razon_social.ilike(f"%{busqueda}%"),
+                    Cliente.nombre_fantasia.ilike(f"%{busqueda}%"),
+                )
+            )
     count_result = await db.execute(count_query)
     total = count_result.scalar()
 
@@ -207,6 +225,58 @@ async def crear_cliente(
     await db.refresh(cliente)
 
     return cliente_to_dict(cliente)
+
+
+@router.get("/delegaciones/estado")
+async def estado_delegaciones(
+    db: AsyncSession = Depends(get_db),
+    tenant_id: int = Depends(get_current_tenant_id),
+):
+    """
+    Vista de semáforo: estado de delegación de TODOS los clientes.
+    Debe ir ANTES de las rutas dinámicas /{cliente_id} para evitar conflicto.
+    """
+    import datetime
+    hoy = datetime.date.today()
+    hace_30_dias = hoy - datetime.timedelta(days=30)
+
+    resultado = await db.execute(
+        select(Cliente).where(Cliente.tenant_id == tenant_id, Cliente.activo == True)
+    )
+    clientes = resultado.scalars().all()
+
+    semaforo = []
+    for c in clientes:
+        config = c.configuracion or {}
+        delegacion_fecha_str = config.get("delegacion_fecha")
+
+        if config.get("delegacion_verificada") and delegacion_fecha_str:
+            fecha_ver = datetime.date.fromisoformat(delegacion_fecha_str)
+            if fecha_ver >= hace_30_dias:
+                estado = "verde"
+            else:
+                estado = "amarillo"
+        elif delegacion_fecha_str:
+            estado = "rojo"
+        else:
+            estado = "amarillo"
+
+        semaforo.append({
+            "id": c.id,
+            "cuit": c.cuit,
+            "razon_social": c.razon_social,
+            "estado_delegacion": estado,
+            "ultima_verificacion": delegacion_fecha_str,
+        })
+
+    return {
+        "clientes": semaforo,
+        "resumen": {
+            "verde": sum(1 for x in semaforo if x["estado_delegacion"] == "verde"),
+            "amarillo": sum(1 for x in semaforo if x["estado_delegacion"] == "amarillo"),
+            "rojo": sum(1 for x in semaforo if x["estado_delegacion"] == "rojo"),
+        }
+    }
 
 
 @router.put("/{cliente_id}", response_model=dict)
@@ -454,60 +524,6 @@ async def verificar_delegacion_arca(
             "mensaje": f"No se pudo verificar. El cliente debe ir a arca.gob.ar y delegar al CUIT del estudio.",
             "error_tecnico": str(e)
         }
-
-
-@router.get("/delegaciones/estado")
-async def estado_delegaciones(
-    db: AsyncSession = Depends(get_db),
-    tenant_id: int = Depends(get_current_tenant_id),
-):
-    """
-    Vista de semáforo: estado de delegación de TODOS los clientes.
-    """
-    import datetime
-    hoy = datetime.date.today()
-    hace_30_dias = hoy - datetime.timedelta(days=30)
-
-    resultado = await db.execute(
-        select(Cliente).where(Cliente.tenant_id == tenant_id, Cliente.activo == True)
-    )
-    clientes = resultado.scalars().all()
-
-    semaforo = []
-    for c in clientes:
-        config = c.configuracion or {}
-        delegacion_fecha_str = config.get("delegacion_fecha")
-
-        if config.get("delegacion_verificada") and delegacion_fecha_str:
-            fecha_ver = datetime.date.fromisoformat(delegacion_fecha_str)
-            if fecha_ver >= hace_30_dias:
-                estado = "verde"
-            else:
-                estado = "amarillo"
-        elif delegacion_fecha_str:
-            # Fue verificada pero falló la última vez
-            estado = "rojo"
-        else:
-            # Nunca verificada
-            estado = "amarillo"
-
-        semaforo.append({
-            "id": c.id,
-            "cuit": c.cuit,
-            "razon_social": c.razon_social,
-            "estado_delegacion": estado,
-            "ultima_verificacion": delegacion_fecha_str,
-        })
-
-    return {
-        "clientes": semaforo,
-        "resumen": {
-            "verde": sum(1 for x in semaforo if x["estado_delegacion"] == "verde"),
-            "amarillo": sum(1 for x in semaforo if x["estado_delegacion"] == "amarillo"),
-            "rojo": sum(1 for x in semaforo if x["estado_delegacion"] == "rojo"),
-        }
-    }
-
 
 # ============================================
 # UTILIDADES

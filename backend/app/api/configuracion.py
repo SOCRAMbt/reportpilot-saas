@@ -8,8 +8,8 @@ sin tocar el archivo .env.
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
-from pathlib import Path
 import os
+from pathlib import Path
 import logging
 from datetime import date
 
@@ -25,8 +25,8 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/configuracion", tags=["Configuraci\u00f3n"])
 
-# Directorio seguro para certificados (fuera de /tmp)
-CERTS_DIR = Path("/app/certs")
+# Directorio seguro para certificados (cross-platform)
+CERTS_DIR = Path(os.environ.get("CERTS_DIR", "/app/certs"))
 
 # Extensiones v\u00e1lidas
 CERT_EXTENSIONS = {".cer", ".pem", ".crt"}

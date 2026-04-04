@@ -305,7 +305,7 @@ class ARCAService:
             recovery_timeout=60
         )
 
-    def _get_auth_headers(
+    async def _get_auth_headers(
         self,
         session,
         tenant_id: int,
@@ -322,7 +322,7 @@ class ARCAService:
         Returns:
             dict: Headers SOAP con token y signature
         """
-        token, signature = get_token_para_servicio(
+        token, signature = await get_token_para_servicio(
             session, tenant_id, servicio, force_refresh=False
         )
 

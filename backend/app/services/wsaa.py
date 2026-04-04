@@ -417,8 +417,12 @@ async def get_token_para_servicio(
         if not force_refresh:
             cached = redis_client.hgetall(cache_key)
             if cached:
-                logger.debug(f"Token en caché para {servicio}")
-                return cached[b"token"].decode(), cached[b"signature"].decode()
+                t = cached.get(b"token") or cached.get("token")
+                s = cached.get(b"signature") or cached.get("signature")
+                if t and s:
+                    logger.debug(f"Token en caché para {servicio}")
+                    return (t.decode() if isinstance(t, bytes) else t,
+                            s.decode() if isinstance(s, bytes) else s)
 
         # Solicitar nuevo token
         token, signature = await obtener_ta(servicio)

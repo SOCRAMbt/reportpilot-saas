@@ -12,7 +12,7 @@ Implementa:
 """
 
 import logging
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 from decimal import Decimal
 from typing import Optional, Any
 from dataclasses import dataclass, field
@@ -142,12 +142,11 @@ class MotorRiesgoFiscal:
         # Obtener fecha de inicio de actividades
         fecha_inicio = cliente.fecha_inicio_actividades or fecha_corte
 
-        # Calcular período de análisis
+        # Calcular período de análisis (safe: usa timedelta para evitar overflow de día)
         meses_analisis = min(12, (fecha_corte - fecha_inicio).days // 30 + 1)
-        fecha_inicio_analisis = fecha_corte.replace(
-            month=fecha_corte.month - meses_analisis if fecha_corte.month > meses_analisis else 12,
-            year=fecha_corte.year - 1 if fecha_corte.month <= meses_analisis else fecha_corte.year
-        )
+        # Safe date subtraction: restar días en vez de replace mes
+        dias_a_restar = meses_analisis * 30
+        fecha_inicio_analisis = fecha_corte - timedelta(days=dias_a_restar)
 
         # Obtener ingresos de los últimos N meses
         ingresos = await self._obtener_ingresos(
@@ -328,7 +327,7 @@ class MotorRiesgoFiscal:
             fecha_inicio_anio = date(fecha_corte.year, 1, 1)
             result = await self.session.execute(
                 select(func.count(Comprobante.id)).where(
-                    Comprobante.cliente_id == cliente_id,
+                    Comprobante.cliente_id == cliente.id,
                     Comprobante.tipo_comprobante.in_(["3", "C"]),
                     Comprobante.total > float(precio_unitario_max),
                     Comprobante.fecha_emision >= fecha_inicio_anio,
