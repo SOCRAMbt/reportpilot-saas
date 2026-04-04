@@ -5,6 +5,7 @@ Módulo de seguridad - HMAC, hashing, JWT y gestión de contraseñas
 import hmac
 import hashlib
 import base64
+import bcrypt
 from datetime import datetime, timedelta
 from typing import Optional, Any
 from jose import jwt, JWTError
@@ -95,7 +96,7 @@ def hash_password(password: str) -> str:
     Returns:
         str: Contraseña hasheada
     """
-    return pwd_context.hash(password)
+    return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
@@ -109,7 +110,7 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
     Returns:
         bool: True si la contraseña es correcta
     """
-    return pwd_context.verify(plain_password, hashed_password)
+    return bcrypt.checkpw(plain_password.encode('utf-8'), hashed_password.encode('utf-8'))
 
 
 # ============================================
