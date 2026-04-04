@@ -4,10 +4,13 @@ AccountantOS v9.7 - Aplicación Principal FastAPI
 
 import logging
 from contextlib import asynccontextmanager
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.middleware.base import BaseHTTPMiddleware
 
 from app.core.config import settings
+from app.core.security import verify_access_token
+from app.core.context import current_tenant_id
 from app.api import auth, comprobantes, veps, clientes, dashboard, bank_kit, alertas, configuracion, arco
 from app.db import async_engine
 
@@ -86,6 +89,35 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+# ============================================
+# MIDDLEWARE — RLS: setear tenant_id en cada request
+# ============================================
+
+class TenantRLSMiddleware(BaseHTTPMiddleware):
+    """
+    Extrae tenant_id del JWT y lo guarda en el contexto del request.
+    get_db() lo lee y ejecuta set_config('app.current_tenant', ...)
+    para activar Row-Level Security en PostgreSQL.
+    """
+
+    async def dispatch(self, request: Request, call_next):
+        auth_header = request.headers.get("authorization", "")
+        if auth_header.startswith("Bearer "):
+            token = auth_header[7:]
+            try:
+                payload = verify_access_token(token)
+                if payload and payload.get("tenant_id"):
+                    tid = int(payload["tenant_id"])
+                    current_tenant_id.set(tid)
+            except Exception:
+                pass  # Si el token es inválido, el endpoint lo rechazará
+
+        return await call_next(request)
+
+
+app.add_middleware(TenantRLSMiddleware)
 
 
 # ============================================

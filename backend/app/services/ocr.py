@@ -12,7 +12,6 @@ ADVERTENCIA: Usar SOLO Vertex AI con Enterprise Agreement (ZDR garantizado)
 NO usar api.generativeai.google.com (API pública sin ZDR)
 """
 
-import base64
 import json
 import logging
 import re

@@ -74,13 +74,23 @@ Base = declarative_base()
 
 async def get_db() -> AsyncSession:
     """
-    Dependencia para obtener sesión de BD en FastAPI
-
-    Yields:
-        AsyncSession: Sesión de base de datos
+    Dependencia para obtener sesión de BD en FastAPI.
+    Activa RLS ejecutando set_config('app.current_tenant', ...)
+    antes de cualquier query.
     """
     async with AsyncSessionLocal() as session:
         try:
+            # Activar Row-Level Security para este tenant
+            from app.core.context import current_tenant_id
+            from sqlalchemy import text
+
+            tenant_id = current_tenant_id.get()
+            if tenant_id and not is_sqlite:
+                await session.execute(
+                    text("SELECT set_config('app.current_tenant', :tid, true)"),
+                    {"tid": str(tenant_id)}
+                )
+
             yield session
             await session.commit()
         except Exception:

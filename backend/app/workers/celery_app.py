@@ -45,10 +45,10 @@ celery_app.conf.beat_schedule = {
         "options": {"queue": "arca"},
     },
 
-    # Re-verificación T+7
+    # Re-verificación T+7 (diario a las 06:00)
     "re-verificacion-t7": {
         "task": "app.workers.tasks_arca.ejecutar_re_verificaciones",
-        "schedule": 60.0 * 60 * 24,  # Diario a las 06:00
+        "schedule": crontab(hour=6, minute=0),
         "options": {"queue": "arca"},
     },
 
