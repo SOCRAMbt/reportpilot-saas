@@ -158,3 +158,21 @@ def detectar_anomalias_cartera():
 
     import asyncio
     asyncio.run(detectar())
+
+
+@shared_task
+def monitor_monotributo():
+    """
+    Monitoreo periódico de monotributistas — ejecuta semanalmente.
+    Compara facturación acumulada vs topes de categoría y genera alertas.
+    """
+    logger.info("Iniciando monitor de Monotributo")
+
+    async def ejecutar():
+        async with AsyncSessionLocal() as session:
+            from app.services.monitor_monotributo import ejecutar_monitor_monotributo
+            resultado = await ejecutar_monitor_monotributo(session, tenant_id=1)
+            logger.info(f"Monitor Monotributo completado: {resultado}")
+
+    import asyncio
+    asyncio.run(ejecutar())

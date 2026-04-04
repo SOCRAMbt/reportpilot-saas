@@ -79,4 +79,11 @@ celery_app.conf.beat_schedule = {
         "schedule": crontab(hour=9, minute=0),
         "options": {"queue": "default"},
     },
+
+    # Monitor de Monotributo (semanal — lunes a las 07:00)
+    "monitor-monotributo": {
+        "task": "app.workers.tasks_fiscales.monitor_monotributo",
+        "schedule": crontab(hour=7, minute=0, day_of_week=1),
+        "options": {"queue": "fiscales"},
+    },
 }
